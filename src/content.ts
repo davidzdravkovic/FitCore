@@ -74,12 +74,12 @@ export const site = {
       'Set your notice window (for example 2–4 hours). If cancellation falls inside it and cannot be rebooked, the system applies your policy. Clear for the client, fair for the coach, predictable for the business.',
   },
   approach: {
-    title: 'A solid core. Fitted to your company.',
-    body: 'Universal operations covered once — sessions, coaches, packages, scheduling — then extended to match your rules and workflows. Not a rigid one-size app. Not a rebuild from zero every time.',
+    title: 'Software that fits how you already work',
+    body: 'You get the essentials every training business needs — sessions, coaches, packages, scheduling — set up around your rules, not the other way around. No forcing your team into a generic gym app.',
     points: [
-      'Shared core for the pains every growing training business hits',
-      'Custom extensions for your cancellation policy, packages, and team flows',
-      'Built to lower the risk of switching: clear scope, close communication, software that does the job',
+      'Your cancellation policy, packages, and coach flows — reflected in the system',
+      'Clear scope from the start so you know what you are getting',
+      'Built to make the switch feel manageable, not chaotic',
     ],
   },
   cta: {
