@@ -1,18 +1,11 @@
-using FitCore.Api.Data;
-using Microsoft.EntityFrameworkCore;
+using FitCore.Api.Composition;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddFitCoreServices(builder.Configuration);
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+await app.UseFitCorePipelineAsync();
 
-app.UseHttpsRedirection();
 app.Run();
