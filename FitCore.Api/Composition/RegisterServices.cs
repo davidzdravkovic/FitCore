@@ -5,6 +5,8 @@ using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Auth;
 using FitCore.Api.Infrastructure.Aws;
 using FitCore.Api.Infrastructure.Email;
+using FitCore.Api.Errors;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -41,6 +43,8 @@ public static class RegisterServices
         services.AddScoped<PlatformAuthService>();
         services.AddSingleton<JwtTokenIssuer>();
         services.AddScoped<IEmailSender, SesEmailSender>();
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+
 
         return services;
     }

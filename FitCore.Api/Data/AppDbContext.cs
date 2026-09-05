@@ -24,6 +24,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<PlatformLoginToken>(entity =>
         {
             entity.HasIndex(t => t.TokenHash).IsUnique();
+
+            entity.HasIndex(t => t.PlatformAdminId)
+                .IsUnique()
+                .HasFilter("\"UsedAt\" IS NULL")
+                .HasDatabaseName("IX_PlatformLoginTokens_OneUnusedPerAdmin");
+
             entity.HasOne(t => t.PlatformAdmin)
                 .WithMany()
                 .HasForeignKey(t => t.PlatformAdminId)

@@ -38,11 +38,7 @@ public class PlatformAuthService(
         PlatformAdmin admin,
         CancellationToken cancellationToken = default)
     {
-        var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
-
+        string rawToken = GenerateRawToken();
         var now = DateTime.UtcNow;
 
         var unused = await db.PlatformLoginTokens
@@ -110,5 +106,15 @@ public class PlatformAuthService(
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
         return Convert.ToHexString(bytes);
+    }
+
+    private static string GenerateRawToken()
+    {
+       return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        
+
     }
 }
