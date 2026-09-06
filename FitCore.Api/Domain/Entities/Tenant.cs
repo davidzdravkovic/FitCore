@@ -1,3 +1,4 @@
+using FitCore.Api.Domain;
 
 namespace FitCore.Api.Domain.Entities;
 

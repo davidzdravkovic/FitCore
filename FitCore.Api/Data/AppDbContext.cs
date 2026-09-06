@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<PlatformAdmin> PlatformAdmins => Set<PlatformAdmin>();
     public DbSet<PlatformLoginToken> PlatformLoginTokens => Set<PlatformLoginToken>();
+    public DbSet<Invitation> Invitations => Set<Invitation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,6 +35,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany()
                 .HasForeignKey(t => t.PlatformAdminId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Invitation>(entity =>
+        {
+            entity.Property(i => i.Plan).HasConversion<string>();
+
+            entity.HasIndex(i => i.TokenHash).IsUnique();
+
+            entity.HasIndex(i => i.Email)
+                .IsUnique()
+                .HasFilter("\"UsedAt\" IS NULL")
+                .HasDatabaseName("IX_Invitations_OneUnusedPerEmail");
         });
     }
 }

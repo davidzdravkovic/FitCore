@@ -1,12 +1,13 @@
 using System.Text;
 using FitCore.Api.Data;
+using FitCore.Api.Errors;
+using FitCore.Api.Features.Invitations;
+using FitCore.Api.Features.Organizations;
 using FitCore.Api.Features.PlatformAuth;
 using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Auth;
 using FitCore.Api.Infrastructure.Aws;
 using FitCore.Api.Infrastructure.Email;
-using FitCore.Api.Errors;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -41,9 +42,12 @@ public static class RegisterServices
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
         services.AddScoped<PlatformAuthService>();
+        services.AddScoped<InvitationService>();
+        services.AddScoped<OrganizationService>();
         services.AddSingleton<JwtTokenIssuer>();
         services.AddScoped<IEmailSender, SesEmailSender>();
         services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
 
 
         return services;
@@ -81,6 +85,7 @@ public static class RegisterServices
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey)),
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.FromMinutes(1),
+                RoleClaimType = System.Security.Claims.ClaimTypes.Role,
             };
         }
     }

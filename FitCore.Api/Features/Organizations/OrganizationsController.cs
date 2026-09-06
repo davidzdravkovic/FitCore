@@ -6,12 +6,21 @@ namespace FitCore.Api.Features.Organizations;
 
 [ApiController]
 [Route("api/organizations")]
-public class OrganizationsController : ControllerBase
+public class OrganizationsController(OrganizationService organizationService) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("register")]
-    public ActionResult<RegisterOrganizationResponse> Register([FromBody] RegisterOrganizationRequest request)
+    public async Task<ActionResult<RegisterOrganizationResponse>> Register(
+        [FromBody] RegisterOrganizationRequest request,
+        CancellationToken cancellationToken)
     {
-        return Ok(new RegisterOrganizationResponse("Not implemented"));
+        var (response, error) = await organizationService.RegisterAsync(
+            request,
+            cancellationToken);
+
+        if (error is not null)
+            return BadRequest(new { message = error });
+
+        return Ok(response);
     }
 }

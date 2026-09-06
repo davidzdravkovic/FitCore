@@ -19,7 +19,7 @@ public static class WebApplicationExtensions
         }
 
         await PlatformAdminSeeder.SeedAsync(app.Services);
-        
+
         app.UseExceptionHandler();
         app.UseCors(app.Environment.IsDevelopment() ? "DevCors" : "ProdCors");
 
