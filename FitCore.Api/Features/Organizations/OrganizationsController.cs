@@ -1,3 +1,4 @@
+using FitCore.Api.Features.Organizations.Login;
 using FitCore.Api.Features.Organizations.Register;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,27 @@ public class OrganizationsController(OrganizationService organizationService) : 
 
         if (error is not null)
             return BadRequest(new { message = error });
+
+        return Ok(response);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("login")]
+    public async Task<ActionResult<LoginOrganizationResponse>> Login(
+        [FromBody] LoginOrganizationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var (response, error) = await organizationService.LoginAsync(
+            request,
+            cancellationToken);
+
+        if (error is not null)
+        {
+            if (error == "Invalid email or password")
+                return Unauthorized(new { message = error });
+
+            return BadRequest(new { message = error });
+        }
 
         return Ok(response);
     }

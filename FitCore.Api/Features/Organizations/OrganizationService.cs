@@ -3,6 +3,7 @@ using System.Text;
 using FitCore.Api.Data;
 using FitCore.Api.Domain;
 using FitCore.Api.Domain.Entities;
+using FitCore.Api.Features.Organizations.Login;
 using FitCore.Api.Features.Organizations.Register;
 using FitCore.Api.Infrastructure.Auth;
 using Microsoft.EntityFrameworkCore;
@@ -31,9 +32,6 @@ public class OrganizationService(AppDbContext db, JwtTokenIssuer jwtTokenIssuer)
 
         var ownerEmail = request.OwnerEmail.Trim().ToLowerInvariant();
         var businessEmail = request.BusinessEmail.Trim().ToLowerInvariant();
-
-        if (!string.Equals(ownerEmail, invitation.Email, StringComparison.Ordinal))
-            return (null, "Owner email must match the invited email address.");
 
         var ownerExists = await db.Users
             .AnyAsync(u => u.Email == ownerEmail, cancellationToken);
@@ -77,6 +75,33 @@ public class OrganizationService(AppDbContext db, JwtTokenIssuer jwtTokenIssuer)
                 accessToken,
                 tenant.Name,
                 owner.FirstName),
+            null);
+    }
+
+    public async Task<(LoginOrganizationResponse? Response, string? Error)> LoginAsync(
+        LoginOrganizationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var email = request.Email.Trim().ToLowerInvariant();
+
+        var user = await db.Users
+            .Include(u => u.Tenant)
+            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+
+        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            return (null, "Invalid email or password");
+
+        if (user.Tenant.Status != TenantStatus.Active)
+            return (null, "This organization is not active.");
+
+        var accessToken = jwtTokenIssuer.CreateTenantOwnerToken(user);
+
+        return (
+            new LoginOrganizationResponse(
+                "Signed in",
+                accessToken,
+                user.Tenant.Name,
+                user.FirstName),
             null);
     }
 
