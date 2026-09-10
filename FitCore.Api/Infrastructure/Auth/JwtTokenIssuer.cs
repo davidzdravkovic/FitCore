@@ -15,12 +15,26 @@ public class JwtTokenIssuer(IOptions<JwtOptions> options)
             email: admin.Email,
             role: "PlatformAdmin");
 
-    public string CreateTenantOwnerToken(User user) =>
+    public string CreateTenantOwnerToken(Staff staff) =>
         CreateToken(
-            subjectId: user.Id,
-            email: user.Email,
+            subjectId: staff.Id,
+            email: staff.Email,
             role: "TenantOwner",
-            tenantId: user.TenantId);
+            tenantId: staff.TenantId);
+
+    public string CreateTenantStaffToken(Staff staff) =>
+        CreateToken(
+            subjectId: staff.Id,
+            email: staff.Email,
+            role: "TenantStaff",
+            tenantId: staff.TenantId);
+
+    public string CreateMemberToken(Member member) =>
+        CreateToken(
+            subjectId: member.Id,
+            email: member.Email!,
+            role: "Member",
+            tenantId: member.TenantId);
 
     private string CreateToken(
         Guid subjectId,

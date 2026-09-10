@@ -13,5 +13,6 @@ public class Tenant
     public DateTime CreatedAt { get; set; }
     public TenantStatus Status { get; set; }
 
-    public ICollection<User> Users { get; set; } = [];
+    public ICollection<Staff> Staff { get; set; } = [];
+    public ICollection<Member> Members { get; set; } = [];
 }

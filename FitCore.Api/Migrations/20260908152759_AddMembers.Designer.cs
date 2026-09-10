@@ -3,6 +3,7 @@ using System;
 using FitCore.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FitCore.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260908152759_AddMembers")]
+    partial class AddMembers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -71,9 +74,6 @@ namespace FitCore.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
@@ -83,9 +83,6 @@ namespace FitCore.Api.Migrations
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
                     b.Property<string>("Phone")
@@ -103,57 +100,14 @@ namespace FitCore.Api.Migrations
                     b.HasIndex("TenantId", "Email")
                         .IsUnique()
                         .HasDatabaseName("IX_Members_TenantId_Email")
-                        .HasFilter("\"Email\" IS NOT NULL AND \"DeletedAt\" IS NULL");
+                        .HasFilter("\"Email\" IS NOT NULL");
 
                     b.HasIndex("TenantId", "Phone")
                         .IsUnique()
                         .HasDatabaseName("IX_Members_TenantId_Phone")
-                        .HasFilter("\"Phone\" IS NOT NULL AND \"DeletedAt\" IS NULL");
+                        .HasFilter("\"Phone\" IS NOT NULL");
 
-                    b.ToTable("Members", t =>
-                        {
-                            t.HasCheckConstraint("CK_Members_EmailOrPhone", "(\"Email\" IS NOT NULL AND btrim(\"Email\") <> '') OR (\"Phone\" IS NOT NULL AND btrim(\"Phone\") <> '')");
-                        });
-                });
-
-            modelBuilder.Entity("FitCore.Api.Domain.Entities.MemberInvite", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("MemberId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UsedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MemberId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_MemberInvites_OneUnusedPerMember")
-                        .HasFilter("\"UsedAt\" IS NULL");
-
-                    b.HasIndex("TenantId");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
-
-                    b.ToTable("MemberInvites");
+                    b.ToTable("Members");
                 });
 
             modelBuilder.Entity("FitCore.Api.Domain.Entities.PlatformAdmin", b =>
@@ -216,87 +170,6 @@ namespace FitCore.Api.Migrations
                     b.ToTable("PlatformLoginTokens");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Entities.Staff", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "Email")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Staff_TenantId_Email")
-                        .HasFilter("\"DeletedAt\" IS NULL");
-
-                    b.ToTable("Staff", (string)null);
-                });
-
-            modelBuilder.Entity("FitCore.Api.Domain.Entities.StaffInvite", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("StaffId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UsedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StaffId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_StaffInvites_OneUnusedPerStaff")
-                        .HasFilter("\"UsedAt\" IS NULL");
-
-                    b.HasIndex("TenantId");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
-
-                    b.ToTable("StaffInvites");
-                });
-
             modelBuilder.Entity("FitCore.Api.Domain.Entities.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -335,6 +208,39 @@ namespace FitCore.Api.Migrations
                     b.ToTable("Tenants");
                 });
 
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Email")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+                });
+
             modelBuilder.Entity("FitCore.Api.Domain.Entities.Member", b =>
                 {
                     b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
@@ -342,25 +248,6 @@ namespace FitCore.Api.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("FitCore.Api.Domain.Entities.MemberInvite", b =>
-                {
-                    b.HasOne("FitCore.Api.Domain.Entities.Member", "Member")
-                        .WithMany()
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Member");
 
                     b.Navigation("Tenant");
                 });
@@ -376,32 +263,13 @@ namespace FitCore.Api.Migrations
                     b.Navigation("PlatformAdmin");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Entities.Staff", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.User", b =>
                 {
                     b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
-                        .WithMany("Staff")
+                        .WithMany("Users")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("FitCore.Api.Domain.Entities.StaffInvite", b =>
-                {
-                    b.HasOne("FitCore.Api.Domain.Entities.Staff", "Staff")
-                        .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Staff");
 
                     b.Navigation("Tenant");
                 });
@@ -410,7 +278,7 @@ namespace FitCore.Api.Migrations
                 {
                     b.Navigation("Members");
 
-                    b.Navigation("Staff");
+                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

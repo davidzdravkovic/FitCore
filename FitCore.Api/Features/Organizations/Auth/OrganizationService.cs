@@ -33,11 +33,6 @@ public class OrganizationService(AppDbContext db, JwtTokenIssuer jwtTokenIssuer)
         var ownerEmail = request.OwnerEmail.Trim().ToLowerInvariant();
         var businessEmail = request.BusinessEmail.Trim().ToLowerInvariant();
 
-        var ownerExists = await db.Users
-            .AnyAsync(u => u.Email == ownerEmail, cancellationToken);
-
-        if (ownerExists)
-            return (null, "An account with this owner email already exists.");
 
         var tenant = new Tenant
         {
@@ -51,19 +46,20 @@ public class OrganizationService(AppDbContext db, JwtTokenIssuer jwtTokenIssuer)
             Status = TenantStatus.Active,
         };
 
-        var owner = new User
+        var owner = new Staff
         {
             Id = Guid.NewGuid(),
             TenantId = tenant.Id,
             FirstName = request.OwnerFirstName.Trim(),
             LastName = request.OwnerLastName.Trim(),
             Email = ownerEmail,
+            Role = StaffRole.Owner,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.OwnerPassword),
         };
 
         invitation.UsedAt = now;
         db.Tenants.Add(tenant);
-        db.Users.Add(owner);
+        db.Staff.Add(owner);
 
         await db.SaveChangesAsync(cancellationToken);
 
@@ -84,24 +80,40 @@ public class OrganizationService(AppDbContext db, JwtTokenIssuer jwtTokenIssuer)
     {
         var email = request.Email.Trim().ToLowerInvariant();
 
-        var user = await db.Users
-            .Include(u => u.Tenant)
-            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+        var candidates = await db.Staff
+            .Include(s => s.Tenant)
+            .Where(s =>
+                s.Email == email
+                && s.DeletedAt == null
+                && s.Role == StaffRole.Owner)
+            .ToListAsync(cancellationToken);
 
-        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        var matches = candidates
+            .Where(s =>
+                s.PasswordHash is not null
+                && BCrypt.Net.BCrypt.Verify(request.Password, s.PasswordHash)
+                && s.Tenant.Status == TenantStatus.Active)
+            .ToList();
+
+        if (matches.Count == 0)
             return (null, "Invalid email or password");
 
-        if (user.Tenant.Status != TenantStatus.Active)
-            return (null, "This organization is not active.");
+        if (matches.Count > 1)
+        {
+            return (
+                null,
+                "This email belongs to more than one organization. Choose an organization to continue.");
+        }
 
-        var accessToken = jwtTokenIssuer.CreateTenantOwnerToken(user);
+        var staff = matches[0];
+        var accessToken = jwtTokenIssuer.CreateTenantOwnerToken(staff);
 
         return (
             new LoginOrganizationResponse(
                 "Signed in",
                 accessToken,
-                user.Tenant.Name,
-                user.FirstName),
+                staff.Tenant.Name,
+                staff.FirstName),
             null);
     }
 
