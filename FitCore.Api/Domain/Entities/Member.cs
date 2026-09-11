@@ -1,4 +1,4 @@
-using FitCore.Api.Domain;
+using FitCore.Api.Domain.Enums;
 
 namespace FitCore.Api.Domain.Entities;
 
@@ -18,4 +18,6 @@ public class Member
     public MemberStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
+
+    public ICollection<Membership> Memberships { get; set; } = [];
 }

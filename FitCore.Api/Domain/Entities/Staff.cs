@@ -1,4 +1,4 @@
-using FitCore.Api.Domain;
+using FitCore.Api.Domain.Enums;
 
 namespace FitCore.Api.Domain.Entities;
 

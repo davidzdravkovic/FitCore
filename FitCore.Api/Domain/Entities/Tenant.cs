@@ -1,4 +1,4 @@
-using FitCore.Api.Domain;
+using FitCore.Api.Domain.Enums;
 
 namespace FitCore.Api.Domain.Entities;
 
@@ -15,4 +15,7 @@ public class Tenant
 
     public ICollection<Staff> Staff { get; set; } = [];
     public ICollection<Member> Members { get; set; } = [];
+    public ICollection<Service> Services { get; set; } = [];
+    public ICollection<MembershipPlan> MembershipPlans { get; set; } = [];
+    public ICollection<Membership> Memberships { get; set; } = [];
 }

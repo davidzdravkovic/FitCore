@@ -1,0 +1,7 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace FitCore.Api.Features.Platform.Auth.Login;
+
+public record LoginRequest(
+    [Required, EmailAddress] string Email,
+    [Required, MinLength(8)] string Password);

@@ -1,3 +1,5 @@
+using FitCore.Api.Domain.Enums;
+
 namespace FitCore.Api.Domain.Entities;
 
 public class Invitation

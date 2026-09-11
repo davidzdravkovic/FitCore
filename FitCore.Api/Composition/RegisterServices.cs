@@ -1,12 +1,18 @@
 using System.Text;
 using FitCore.Api.Data;
+using FitCore.Api.Data.Stores.OrganizationOwner.AuthStore;
+using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
+using FitCore.Api.Data.Stores.OrganizationOwner.StaffStore;
+using FitCore.Api.Data.Stores.Platform;
 using FitCore.Api.Errors;
-using FitCore.Api.Features.Invitations;
-using FitCore.Api.Features.Members;
-using FitCore.Api.Features.Organizations;
-using FitCore.Api.Features.StaffMembers;
-using FitCore.Api.Features.Tenants;
-using FitCore.Api.Features.PlatformAuth;
+using FitCore.Api.Features.Platform.Invitations;
+using FitCore.Api.Features.Organizations.Admin.Auth;
+using FitCore.Api.Features.Organizations.Admin.Members;
+using FitCore.Api.Features.Organizations.Admin.Staff;
+using FitCore.Api.Features.Organizations.Members;
+using FitCore.Api.Features.Organizations.Staff;
+using FitCore.Api.Features.Platform.Tenants;
+using FitCore.Api.Features.Platform.Auth;
 using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Auth;
 using FitCore.Api.Infrastructure.Aws;
@@ -44,14 +50,25 @@ public static class RegisterServices
         services.AddFitCoreCors(configuration);
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddScoped<IPlatformAuthStore, EfPlatformAuthStore>();
+        services.AddScoped<IPlatformInvitationStore, EfPlatformInvitationStore>();
+        services.AddScoped<ITenantStore, EfTenantStore>();
+        services.AddScoped<IOrganizationAuthStore, EfOrganizationAuthStore>();
+        services.AddScoped<IStaffStore, EfStaffStore>();
+        services.AddScoped<IMemberStore, EfMemberStore>();
+
         services.AddScoped<PlatformAuthService>();
         services.AddScoped<InvitationService>();
         services.AddScoped<OrganizationService>();
         services.AddScoped<MemberService>();
+        services.AddScoped<MemberAuthService>();
         services.AddScoped<StaffService>();
+        services.AddScoped<StaffAuthService>();
         services.AddScoped<TenantService>();
         services.AddSingleton<JwtTokenIssuer>();
         services.AddScoped<IEmailSender, SesEmailSender>();
+        services.AddExceptionHandler<EmailExceptionHandler>();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 

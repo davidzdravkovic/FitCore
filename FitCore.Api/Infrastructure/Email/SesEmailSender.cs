@@ -1,8 +1,10 @@
 using Amazon;
 using Amazon.SimpleEmail;
 using Amazon.SimpleEmail.Model;
+using FitCore.Api.Errors;
 using FitCore.Api.Infrastructure.Aws;
 using Microsoft.Extensions.Options;
+
 
 namespace FitCore.Api.Infrastructure.Email;
 
@@ -48,8 +50,18 @@ public class SesEmailSender(
                 }
             }
         };
-
-        var response = await client.SendEmailAsync(request, cancellationToken);
-        logger.LogInformation("SES email sent to {To}. MessageId={MessageId}", to, response.MessageId);
+        try
+        {
+            var response = await client.SendEmailAsync(request, cancellationToken);
+            logger.LogInformation(
+                "SES email sent to {To}. MessageId={MessageId}",
+                to,
+                response.MessageId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "SES email failed to {To}", to);
+            throw new EmailDeliveryException("Failed to send email.", ex);
+        }
     }
 }
