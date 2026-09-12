@@ -1,6 +1,7 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.StaffStore;
 using FitCore.Api.Domain.Enums;
 using FitCore.Api.Domain.Entities;
+using FitCore.Api.Errors;
 using FitCore.Api.Features.Organizations.Staff.Activate;
 using FitCore.Api.Features.Organizations.Staff.Login;
 using FitCore.Api.Infrastructure.Auth;
@@ -10,7 +11,7 @@ namespace FitCore.Api.Features.Organizations.Staff;
 
 public class StaffAuthService(IStaffStore staffStore, JwtTokenIssuer jwtTokenIssuer)
 {
-    public async Task<(StaffSessionResponse? Response, string? Error)> ActivateAsync(
+    public async Task<Result<StaffSessionResponse>> ActivateAsync(
         ActivateStaffRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -23,25 +24,25 @@ public class StaffAuthService(IStaffStore staffStore, JwtTokenIssuer jwtTokenIss
             cancellationToken);
 
         if (invite is null)
-            return (null, "This invitation link is invalid or has expired.");
+            return Result<StaffSessionResponse>.Fail(ErrorCodes.InvitationInvalidOrExpired);
 
         var staff = invite.Staff;
 
         if (staff.DeletedAt is not null)
-            return (null, "This staff account is no longer available.");
+            return Result<StaffSessionResponse>.Fail(ErrorCodes.StaffUnavailable);
 
         if (staff.Tenant.Status != TenantStatus.Active)
-            return (null, "This organization is not active.");
+            return Result<StaffSessionResponse>.Fail(ErrorCodes.OrganizationNotActive);
 
         staff.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
         invite.UsedAt = now;
 
         await staffStore.SaveChangesAsync(cancellationToken);
 
-        return (ToSession(staff, "Account ready"), null);
+        return Result<StaffSessionResponse>.Success(ToSession(staff, "Account ready"));
     }
 
-    public async Task<(StaffSessionResponse? Response, string? Error)> LoginAsync(
+    public async Task<Result<StaffSessionResponse>> LoginAsync(
         LoginStaffRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -59,16 +60,12 @@ public class StaffAuthService(IStaffStore staffStore, JwtTokenIssuer jwtTokenIss
             .ToList();
 
         if (matches.Count == 0)
-            return (null, "Invalid email or password");
+            return Result<StaffSessionResponse>.Fail(ErrorCodes.InvalidCredentials);
 
         if (matches.Count > 1)
-        {
-            return (
-                null,
-                "This email belongs to more than one organization. Choose an organization to continue.");
-        }
+            return Result<StaffSessionResponse>.Fail(ErrorCodes.EmailAmbiguousOrg);
 
-        return (ToSession(matches[0], "Signed in"), null);
+        return Result<StaffSessionResponse>.Success(ToSession(matches[0], "Signed in"));
     }
 
     private StaffSessionResponse ToSession(StaffEntity staff, string message) =>

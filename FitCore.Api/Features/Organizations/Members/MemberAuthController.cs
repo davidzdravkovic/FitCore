@@ -1,3 +1,4 @@
+using FitCore.Api.Errors;
 using FitCore.Api.Features.Organizations.Members.Activate;
 using FitCore.Api.Features.Organizations.Members.Login;
 using Microsoft.AspNetCore.Authorization;
@@ -15,14 +16,14 @@ public class MemberAuthController(MemberAuthService memberAuthService) : Control
         [FromBody] ActivateMemberRequest request,
         CancellationToken cancellationToken)
     {
-        var (response, error) = await memberAuthService.ActivateAsync(
+        var result = await memberAuthService.ActivateAsync(
             request,
             cancellationToken);
 
-        if (error is not null)
-            return BadRequest(new { message = error });
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     [HttpPost("login")]
@@ -30,18 +31,13 @@ public class MemberAuthController(MemberAuthService memberAuthService) : Control
         [FromBody] LoginMemberRequest request,
         CancellationToken cancellationToken)
     {
-        var (response, error) = await memberAuthService.LoginAsync(
+        var result = await memberAuthService.LoginAsync(
             request,
             cancellationToken);
 
-        if (error is not null)
-        {
-            if (error == "Invalid email or password")
-                return Unauthorized(new { message = error });
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
-            return BadRequest(new { message = error });
-        }
-
-        return Ok(response);
+        return Ok(result.Value);
     }
 }

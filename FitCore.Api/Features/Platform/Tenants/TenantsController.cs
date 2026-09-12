@@ -1,3 +1,4 @@
+using FitCore.Api.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,15 +22,10 @@ public class TenantsController(TenantService tenantService) : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var (ok, error) = await tenantService.CancelAsync(id, cancellationToken);
+        var result = await tenantService.CancelAsync(id, cancellationToken);
 
-        if (!ok)
-        {
-            if (error is "Organization not found.")
-                return NotFound(new { message = error });
-
-            return BadRequest(new { message = error });
-        }
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
         return NoContent();
     }

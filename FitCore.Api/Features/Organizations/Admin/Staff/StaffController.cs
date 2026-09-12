@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using FitCore.Api.Errors;
 using FitCore.Api.Features.Organizations.Admin.Staff.Create;
 using FitCore.Api.Features.Organizations.Admin.Staff.Invite;
 using Microsoft.AspNetCore.Authorization;
@@ -18,7 +19,7 @@ public class StaffController(StaffService staffService) : ControllerBase
     {
         var tenantIdClaim = User.FindFirstValue("tenant_id");
         if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return Unauthorized(new { message = "Missing tenant context." });
+            return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
         var staff = await staffService.ListAsync(tenantId, cancellationToken);
         return Ok(staff);
@@ -31,17 +32,17 @@ public class StaffController(StaffService staffService) : ControllerBase
     {
         var tenantIdClaim = User.FindFirstValue("tenant_id");
         if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return Unauthorized(new { message = "Missing tenant context." });
+            return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
-        var (response, error) = await staffService.CreateAsync(
+        var result = await staffService.CreateAsync(
             tenantId,
             request,
             cancellationToken);
 
-        if (error is not null)
-            return BadRequest(new { message = error });
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     [HttpDelete("{id:guid}")]
@@ -51,7 +52,7 @@ public class StaffController(StaffService staffService) : ControllerBase
     {
         var tenantIdClaim = User.FindFirstValue("tenant_id");
         if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return Unauthorized(new { message = "Missing tenant context." });
+            return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
         Guid? actingStaffId = null;
         var sub = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
@@ -59,19 +60,14 @@ public class StaffController(StaffService staffService) : ControllerBase
         if (Guid.TryParse(sub, out var parsedSub))
             actingStaffId = parsedSub;
 
-        var (ok, error) = await staffService.SoftDeleteAsync(
+        var result = await staffService.SoftDeleteAsync(
             tenantId,
             id,
             actingStaffId,
             cancellationToken);
 
-        if (!ok)
-        {
-            if (error is "You cannot delete your own staff account.")
-                return BadRequest(new { message = error });
-
-            return NotFound(new { message = error });
-        }
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
         return NoContent();
     }
@@ -83,20 +79,15 @@ public class StaffController(StaffService staffService) : ControllerBase
     {
         var tenantIdClaim = User.FindFirstValue("tenant_id");
         if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return Unauthorized(new { message = "Missing tenant context." });
+            return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
-        var (ok, error) = await staffService.InviteAsync(
+        var result = await staffService.InviteAsync(
             tenantId,
             id,
             cancellationToken);
 
-        if (!ok)
-        {
-            if (error is "Staff member not found.")
-                return NotFound(new { message = error });
-
-            return BadRequest(new { message = error });
-        }
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
         return Ok(new InviteStaffResponse("Invitation sent"));
     }

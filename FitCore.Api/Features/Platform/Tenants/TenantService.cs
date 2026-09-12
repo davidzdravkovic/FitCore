@@ -1,5 +1,6 @@
 using FitCore.Api.Data.Stores.Platform;
 using FitCore.Api.Domain.Enums;
+using FitCore.Api.Errors;
 
 namespace FitCore.Api.Features.Platform.Tenants;
 
@@ -23,21 +24,21 @@ public class TenantService(ITenantStore tenantStore)
             .ToList();
     }
 
-    public async Task<(bool Ok, string? Error)> CancelAsync(
+    public async Task<Result> CancelAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default)
     {
         var tenant = await tenantStore.FindByIdAsync(tenantId, cancellationToken);
 
         if (tenant is null)
-            return (false, "Organization not found.");
+            return Result.Fail(ErrorCodes.OrganizationNotFound);
 
         if (tenant.Status == TenantStatus.Cancelled)
-            return (false, "This organization is already cancelled.");
+            return Result.Fail(ErrorCodes.OrganizationAlreadyCancelled);
 
         tenant.Status = TenantStatus.Cancelled;
         await tenantStore.SaveChangesAsync(cancellationToken);
 
-        return (true, null);
+        return Result.Success();
     }
 }

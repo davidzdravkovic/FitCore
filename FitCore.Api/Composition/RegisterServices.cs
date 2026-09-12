@@ -67,6 +67,7 @@ public static class RegisterServices
         services.AddScoped<StaffAuthService>();
         services.AddScoped<TenantService>();
         services.AddSingleton<JwtTokenIssuer>();
+        services.AddSingleton<IClientLinks, ClientLinks>();
         services.AddScoped<IEmailSender, SesEmailSender>();
         services.AddExceptionHandler<EmailExceptionHandler>();
         services.AddExceptionHandler<GlobalExceptionHandler>();

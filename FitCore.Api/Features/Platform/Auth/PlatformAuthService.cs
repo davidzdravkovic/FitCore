@@ -2,10 +2,10 @@ using System.Security.Cryptography;
 using System.Text;
 using FitCore.Api.Data.Stores.Platform;
 using FitCore.Api.Domain.Entities;
+using FitCore.Api.Errors;
 using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Auth;
 using FitCore.Api.Infrastructure.Email;
-using Microsoft.Extensions.Options;
 
 namespace FitCore.Api.Features.Platform.Auth;
 
@@ -13,11 +13,11 @@ public class PlatformAuthService(
     IPlatformAuthStore authStore,
     IEmailSender emailSender,
     JwtTokenIssuer jwtTokenIssuer,
-    IOptions<AppOptions> appOptions)
+    IClientLinks clientLinks)
 {
     private static readonly TimeSpan LoginTokenLifetime = TimeSpan.FromMinutes(15);
 
-    public async Task<PlatformAdmin?> ValidateCredentialsAsync(
+    public async Task<Result<PlatformAdmin>> ValidateCredentialsAsync(
         string email,
         string password,
         CancellationToken cancellationToken = default)
@@ -27,9 +27,9 @@ public class PlatformAuthService(
         var admin = await authStore.FindAdminByEmailAsync(normalizedEmail, cancellationToken);
 
         if (admin is null || !BCrypt.Net.BCrypt.Verify(password, admin.PasswordHash))
-            return null;
+            return Result<PlatformAdmin>.Fail(ErrorCodes.InvalidCredentials);
 
-        return admin;
+        return Result<PlatformAdmin>.Success(admin);
     }
 
     public async Task SendLoginMagicLinkAsync(
@@ -52,10 +52,7 @@ public class PlatformAuthService(
 
         await authStore.SaveChangesAsync(cancellationToken);
 
-        var flutterVerifyUrl = ClientLinks.Activate(
-            appOptions.Value.ClientBaseUrl,
-            "platform/verify",
-            rawToken);
+        var flutterVerifyUrl = clientLinks.Activate("platform/verify", rawToken);
 
         var html = $"""
             <p>Sign in to FitCore platform admin.</p>
@@ -70,12 +67,12 @@ public class PlatformAuthService(
             cancellationToken);
     }
 
-    public async Task<string?> VerifyLoginTokenAsync(
+    public async Task<Result<string>> VerifyLoginTokenAsync(
         string rawToken,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(rawToken))
-            return null;
+            return Result<string>.Fail(ErrorCodes.SignInLinkInvalidOrExpired);
 
         var hash = HashToken(rawToken.Trim());
         var now = DateTime.UtcNow;
@@ -83,12 +80,13 @@ public class PlatformAuthService(
         var loginToken = await authStore.FindValidLoginTokenAsync(hash, now, cancellationToken);
 
         if (loginToken is null)
-            return null;
+            return Result<string>.Fail(ErrorCodes.SignInLinkInvalidOrExpired);
 
         loginToken.UsedAt = now;
         await authStore.SaveChangesAsync(cancellationToken);
 
-        return jwtTokenIssuer.CreatePlatformAdminToken(loginToken.PlatformAdmin);
+        return Result<string>.Success(
+            jwtTokenIssuer.CreatePlatformAdminToken(loginToken.PlatformAdmin));
     }
 
     private static string HashToken(string rawToken)

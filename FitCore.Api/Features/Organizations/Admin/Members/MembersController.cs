@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FitCore.Api.Errors;
 using FitCore.Api.Features.Organizations.Admin.Members.Create;
 using FitCore.Api.Features.Organizations.Admin.Members.Invite;
 using Microsoft.AspNetCore.Authorization;
@@ -17,7 +18,7 @@ public class MembersController(MemberService memberService) : ControllerBase
     {
         var tenantIdClaim = User.FindFirstValue("tenant_id");
         if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return Unauthorized(new { message = "Missing tenant context." });
+            return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
         var members = await memberService.ListAsync(tenantId, cancellationToken);
         return Ok(members);
@@ -30,17 +31,17 @@ public class MembersController(MemberService memberService) : ControllerBase
     {
         var tenantIdClaim = User.FindFirstValue("tenant_id");
         if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return Unauthorized(new { message = "Missing tenant context." });
+            return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
-        var (response, error) = await memberService.CreateAsync(
+        var result = await memberService.CreateAsync(
             tenantId,
             request,
             cancellationToken);
 
-        if (error is not null)
-            return BadRequest(new { message = error });
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     [HttpDelete("{id:guid}")]
@@ -50,15 +51,15 @@ public class MembersController(MemberService memberService) : ControllerBase
     {
         var tenantIdClaim = User.FindFirstValue("tenant_id");
         if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return Unauthorized(new { message = "Missing tenant context." });
+            return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
-        var (ok, error) = await memberService.SoftDeleteAsync(
+        var result = await memberService.SoftDeleteAsync(
             tenantId,
             id,
             cancellationToken);
 
-        if (!ok)
-            return NotFound(new { message = error });
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
         return NoContent();
     }
@@ -70,20 +71,15 @@ public class MembersController(MemberService memberService) : ControllerBase
     {
         var tenantIdClaim = User.FindFirstValue("tenant_id");
         if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return Unauthorized(new { message = "Missing tenant context." });
+            return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
-        var (ok, error) = await memberService.InviteAsync(
+        var result = await memberService.InviteAsync(
             tenantId,
             id,
             cancellationToken);
 
-        if (!ok)
-        {
-            if (error is "Member not found.")
-                return NotFound(new { message = error });
-
-            return BadRequest(new { message = error });
-        }
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
         return Ok(new InviteMemberResponse("Invitation sent"));
     }

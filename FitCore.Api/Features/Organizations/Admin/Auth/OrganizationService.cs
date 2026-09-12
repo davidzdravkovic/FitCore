@@ -3,6 +3,7 @@ using System.Text;
 using FitCore.Api.Data.Stores.OrganizationOwner.AuthStore;
 using FitCore.Api.Domain.Enums;
 using FitCore.Api.Domain.Entities;
+using FitCore.Api.Errors;
 using FitCore.Api.Features.Organizations.Admin.Auth.Login;
 using FitCore.Api.Features.Organizations.Admin.Auth.Register;
 using FitCore.Api.Infrastructure.Auth;
@@ -14,12 +15,12 @@ public class OrganizationService(
     IOrganizationAuthStore authStore,
     JwtTokenIssuer jwtTokenIssuer)
 {
-    public async Task<(RegisterOrganizationResponse? Response, string? Error)> RegisterAsync(
+    public async Task<Result<RegisterOrganizationResponse>> RegisterAsync(
         RegisterOrganizationRequest request,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.InvitationToken))
-            return (null, "Invitation token is required.");
+            return Result<RegisterOrganizationResponse>.Fail(ErrorCodes.InvitationTokenRequired);
 
         var tokenHash = HashToken(request.InvitationToken.Trim());
         var now = DateTime.UtcNow;
@@ -30,7 +31,7 @@ public class OrganizationService(
             cancellationToken);
 
         if (invitation is null)
-            return (null, "This invitation link is invalid or has expired.");
+            return Result<RegisterOrganizationResponse>.Fail(ErrorCodes.InvitationInvalidOrExpired);
 
         var ownerEmail = request.OwnerEmail.Trim().ToLowerInvariant();
         var businessEmail = request.BusinessEmail.Trim().ToLowerInvariant();
@@ -65,16 +66,15 @@ public class OrganizationService(
 
         var accessToken = jwtTokenIssuer.CreateTenantOwnerToken(owner);
 
-        return (
+        return Result<RegisterOrganizationResponse>.Success(
             new RegisterOrganizationResponse(
                 "Organization created",
                 accessToken,
                 tenant.Name,
-                owner.FirstName),
-            null);
+                owner.FirstName));
     }
 
-    public async Task<(LoginOrganizationResponse? Response, string? Error)> LoginAsync(
+    public async Task<Result<LoginOrganizationResponse>> LoginAsync(
         LoginOrganizationRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -92,25 +92,20 @@ public class OrganizationService(
             .ToList();
 
         if (matches.Count == 0)
-            return (null, "Invalid email or password");
+            return Result<LoginOrganizationResponse>.Fail(ErrorCodes.InvalidCredentials);
 
         if (matches.Count > 1)
-        {
-            return (
-                null,
-                "This email belongs to more than one organization. Choose an organization to continue.");
-        }
+            return Result<LoginOrganizationResponse>.Fail(ErrorCodes.EmailAmbiguousOrg);
 
         var staff = matches[0];
         var accessToken = jwtTokenIssuer.CreateTenantOwnerToken(staff);
 
-        return (
+        return Result<LoginOrganizationResponse>.Success(
             new LoginOrganizationResponse(
                 "Signed in",
                 accessToken,
                 staff.Tenant.Name,
-                staff.FirstName),
-            null);
+                staff.FirstName));
     }
 
     private static string HashToken(string rawToken)

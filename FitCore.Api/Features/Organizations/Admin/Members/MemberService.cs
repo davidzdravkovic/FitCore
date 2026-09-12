@@ -1,18 +1,18 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
 using FitCore.Api.Domain.Enums;
 using FitCore.Api.Domain.Entities;
+using FitCore.Api.Errors;
 using FitCore.Api.Features.Organizations.Admin.Members.Create;
 using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Auth;
 using FitCore.Api.Infrastructure.Email;
-using Microsoft.Extensions.Options;
 
 namespace FitCore.Api.Features.Organizations.Admin.Members;
 
 public class MemberService(
     IMemberStore memberStore,
     IEmailSender emailSender,
-    IOptions<AppOptions> appOptions)
+    IClientLinks clientLinks)
 {
     private static readonly TimeSpan InviteLifetime = TimeSpan.FromDays(7);
 
@@ -34,7 +34,7 @@ public class MemberService(
             .ToList();
     }
 
-    public async Task<(MemberResponse? Response, string? Error)> CreateAsync(
+    public async Task<Result<MemberResponse>> CreateAsync(
         Guid tenantId,
         CreateMemberRequest request,
         CancellationToken cancellationToken = default)
@@ -42,10 +42,10 @@ public class MemberService(
         var tenant = await memberStore.FindTenantByIdAsync(tenantId, cancellationToken);
 
         if (tenant is null)
-            return (null, "Organization not found.");
+            return Result<MemberResponse>.Fail(ErrorCodes.OrganizationNotFound);
 
         if (tenant.Status != TenantStatus.Active)
-            return (null, "This organization is not active.");
+            return Result<MemberResponse>.Fail(ErrorCodes.OrganizationNotActive);
 
         var email = NormalizeEmail(request.Email);
         var phone = NormalizePhone(request.Phone);
@@ -54,13 +54,13 @@ public class MemberService(
         if (email is not null)
         {
             if (await memberStore.EmailTakenAsync(tenantId, email, cancellationToken))
-                return (null, "A member with this email already exists.");
+                return Result<MemberResponse>.Fail(ErrorCodes.MemberEmailTaken);
         }
 
         if (phone is not null)
         {
             if (await memberStore.PhoneTakenAsync(tenantId, phone, cancellationToken))
-                return (null, "A member with this phone already exists.");
+                return Result<MemberResponse>.Fail(ErrorCodes.MemberPhoneTaken);
         }
 
         var member = new Member
@@ -78,10 +78,10 @@ public class MemberService(
         await memberStore.AddAsync(member);
         await memberStore.SaveChangesAsync(cancellationToken);
 
-        return (ToResponse(member), null);
+        return Result<MemberResponse>.Success(ToResponse(member));
     }
 
-    public async Task<(bool Ok, string? Error)> SoftDeleteAsync(
+    public async Task<Result> SoftDeleteAsync(
         Guid tenantId,
         Guid memberId,
         CancellationToken cancellationToken = default)
@@ -89,15 +89,15 @@ public class MemberService(
         var member = await memberStore.FindActiveByIdAsync(tenantId, memberId, cancellationToken);
 
         if (member is null)
-            return (false, "Member not found.");
+            return Result.Fail(ErrorCodes.MemberNotFound);
 
         member.DeletedAt = DateTime.UtcNow;
         await memberStore.SaveChangesAsync(cancellationToken);
 
-        return (true, null);
+        return Result.Success();
     }
 
-    public async Task<(bool Ok, string? Error)> InviteAsync(
+    public async Task<Result> InviteAsync(
         Guid tenantId,
         Guid memberId,
         CancellationToken cancellationToken = default)
@@ -108,13 +108,13 @@ public class MemberService(
             cancellationToken);
 
         if (member is null)
-            return (false, "Member not found.");
+            return Result.Fail(ErrorCodes.MemberNotFound);
 
         if (member.Tenant.Status != TenantStatus.Active)
-            return (false, "This organization is not active.");
+            return Result.Fail(ErrorCodes.OrganizationNotActive);
 
         if (string.IsNullOrWhiteSpace(member.Email))
-            return (false, "This member needs an email before they can be invited.");
+            return Result.Fail(ErrorCodes.MemberEmailRequired);
 
         var now = DateTime.UtcNow;
         var rawToken = InviteTokens.GenerateRaw();
@@ -131,10 +131,7 @@ public class MemberService(
         });
         await memberStore.SaveChangesAsync(cancellationToken);
 
-        var activateUrl = ClientLinks.Activate(
-            appOptions.Value.ClientBaseUrl,
-            "member/activate",
-            rawToken);
+        var activateUrl = clientLinks.Activate("member/activate", rawToken);
 
         var html = $"""
             <p>{member.Tenant.Name} invited you to set up your FitCore account.</p>
@@ -148,7 +145,7 @@ public class MemberService(
             html,
             cancellationToken);
 
-        return (true, null);
+        return Result.Success();
     }
 
     private static MemberResponse ToResponse(Member member) =>

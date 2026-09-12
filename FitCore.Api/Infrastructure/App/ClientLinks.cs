@@ -1,7 +1,12 @@
+using Microsoft.Extensions.Options;
+
 namespace FitCore.Api.Infrastructure.App;
 
-public static class ClientLinks
+public sealed class ClientLinks(IOptions<AppOptions> appOptions) : IClientLinks
 {
-    public static string Activate(string baseUrl, string path, string rawToken) =>
-        $"{baseUrl.TrimEnd('/')}/{path.TrimStart('/')}?token={Uri.EscapeDataString(rawToken)}";
+    public string Activate(string path, string rawToken)
+    {
+        var baseUrl = appOptions.Value.ClientBaseUrl.TrimEnd('/');
+        return $"{baseUrl}/{path.TrimStart('/')}?token={Uri.EscapeDataString(rawToken)}";
+    }
 }

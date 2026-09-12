@@ -1,11 +1,11 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.StaffStore;
 using FitCore.Api.Domain.Enums;
 using FitCore.Api.Domain.Entities;
+using FitCore.Api.Errors;
 using FitCore.Api.Features.Organizations.Admin.Staff.Create;
 using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Auth;
 using FitCore.Api.Infrastructure.Email;
-using Microsoft.Extensions.Options;
 using StaffEntity = FitCore.Api.Domain.Entities.Staff;
 
 namespace FitCore.Api.Features.Organizations.Admin.Staff;
@@ -13,7 +13,7 @@ namespace FitCore.Api.Features.Organizations.Admin.Staff;
 public class StaffService(
     IStaffStore staffStore,
     IEmailSender emailSender,
-    IOptions<AppOptions> appOptions)
+    IClientLinks clientLinks)
 {
     private static readonly TimeSpan InviteLifetime = TimeSpan.FromDays(7);
 
@@ -28,7 +28,7 @@ public class StaffService(
             .ToList();
     }
 
-    public async Task<(StaffResponse? Response, string? Error)> CreateAsync(
+    public async Task<Result<StaffResponse>> CreateAsync(
         Guid tenantId,
         CreateStaffRequest request,
         CancellationToken cancellationToken = default)
@@ -36,15 +36,15 @@ public class StaffService(
         var tenant = await staffStore.FindTenantByIdAsync(tenantId, cancellationToken);
 
         if (tenant is null)
-            return (null, "Organization not found.");
+            return Result<StaffResponse>.Fail(ErrorCodes.OrganizationNotFound);
 
         if (tenant.Status != TenantStatus.Active)
-            return (null, "This organization is not active.");
+            return Result<StaffResponse>.Fail(ErrorCodes.OrganizationNotActive);
 
         var email = request.Email.Trim().ToLowerInvariant();
 
         if (await staffStore.EmailTakenAsync(tenantId, email, cancellationToken))
-            return (null, "A staff member with this email already exists.");
+            return Result<StaffResponse>.Fail(ErrorCodes.StaffEmailTaken);
 
         var staff = new StaffEntity
         {
@@ -60,30 +60,30 @@ public class StaffService(
         await staffStore.AddAsync(staff);
         await staffStore.SaveChangesAsync(cancellationToken);
 
-        return (ToResponse(staff), null);
+        return Result<StaffResponse>.Success(ToResponse(staff));
     }
 
-    public async Task<(bool Ok, string? Error)> SoftDeleteAsync(
+    public async Task<Result> SoftDeleteAsync(
         Guid tenantId,
         Guid staffId,
         Guid? actingStaffId,
         CancellationToken cancellationToken = default)
     {
         if (actingStaffId is not null && actingStaffId == staffId)
-            return (false, "You cannot delete your own staff account.");
+            return Result.Fail(ErrorCodes.CannotDeleteSelf);
 
         var staff = await staffStore.FindActiveByIdAsync(tenantId, staffId, cancellationToken);
 
         if (staff is null)
-            return (false, "Staff member not found.");
+            return Result.Fail(ErrorCodes.StaffNotFound);
 
         staff.DeletedAt = DateTime.UtcNow;
         await staffStore.SaveChangesAsync(cancellationToken);
 
-        return (true, null);
+        return Result.Success();
     }
 
-    public async Task<(bool Ok, string? Error)> InviteAsync(
+    public async Task<Result> InviteAsync(
         Guid tenantId,
         Guid staffId,
         CancellationToken cancellationToken = default)
@@ -91,10 +91,10 @@ public class StaffService(
         var staff = await staffStore.FindActiveWithTenantAsync(tenantId, staffId, cancellationToken);
 
         if (staff is null)
-            return (false, "Staff member not found.");
+            return Result.Fail(ErrorCodes.StaffNotFound);
 
         if (staff.Tenant.Status != TenantStatus.Active)
-            return (false, "This organization is not active.");
+            return Result.Fail(ErrorCodes.OrganizationNotActive);
 
         var now = DateTime.UtcNow;
         var rawToken = InviteTokens.GenerateRaw();
@@ -111,10 +111,7 @@ public class StaffService(
         });
         await staffStore.SaveChangesAsync(cancellationToken);
 
-        var activateUrl = ClientLinks.Activate(
-            appOptions.Value.ClientBaseUrl,
-            "staff/activate",
-            rawToken);
+        var activateUrl = clientLinks.Activate("staff/activate", rawToken);
 
         var html = $"""
             <p>{staff.Tenant.Name} invited you to sign in to FitCore.</p>
@@ -128,7 +125,7 @@ public class StaffService(
             html,
             cancellationToken);
 
-        return (true, null);
+        return Result.Success();
     }
 
     private static StaffResponse ToResponse(StaffEntity staff) =>

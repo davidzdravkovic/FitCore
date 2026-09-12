@@ -5,14 +5,13 @@ using FitCore.Api.Domain.Enums;
 using FitCore.Api.Domain.Entities;
 using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Email;
-using Microsoft.Extensions.Options;
 
 namespace FitCore.Api.Features.Platform.Invitations;
 
 public class InvitationService(
     IPlatformInvitationStore invitationStore,
     IEmailSender emailSender,
-    IOptions<AppOptions> appOptions)
+    IClientLinks clientLinks)
 {
     public async Task CreateInviteAsync(
         string email,
@@ -38,10 +37,7 @@ public class InvitationService(
 
         await invitationStore.SaveChangesAsync(cancellationToken);
 
-        var inviteUrl = ClientLinks.Activate(
-            appOptions.Value.ClientBaseUrl,
-            "tenant/registry",
-            rawToken);
+        var inviteUrl = clientLinks.Activate("tenant/registry", rawToken);
 
         var html = $"""
             <p>Register your gym with FitCore.</p>

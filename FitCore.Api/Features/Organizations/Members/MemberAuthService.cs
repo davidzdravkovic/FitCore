@@ -1,6 +1,7 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
 using FitCore.Api.Domain.Enums;
 using FitCore.Api.Domain.Entities;
+using FitCore.Api.Errors;
 using FitCore.Api.Features.Organizations.Members.Activate;
 using FitCore.Api.Features.Organizations.Members.Login;
 using FitCore.Api.Infrastructure.Auth;
@@ -9,7 +10,7 @@ namespace FitCore.Api.Features.Organizations.Members;
 
 public class MemberAuthService(IMemberStore memberStore, JwtTokenIssuer jwtTokenIssuer)
 {
-    public async Task<(MemberSessionResponse? Response, string? Error)> ActivateAsync(
+    public async Task<Result<MemberSessionResponse>> ActivateAsync(
         ActivateMemberRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -22,25 +23,25 @@ public class MemberAuthService(IMemberStore memberStore, JwtTokenIssuer jwtToken
             cancellationToken);
 
         if (invite is null)
-            return (null, "This invitation link is invalid or has expired.");
+            return Result<MemberSessionResponse>.Fail(ErrorCodes.InvitationInvalidOrExpired);
 
         var member = invite.Member;
 
         if (member.DeletedAt is not null)
-            return (null, "This member account is no longer available.");
+            return Result<MemberSessionResponse>.Fail(ErrorCodes.MemberUnavailable);
 
         if (member.Tenant.Status != TenantStatus.Active)
-            return (null, "This organization is not active.");
+            return Result<MemberSessionResponse>.Fail(ErrorCodes.OrganizationNotActive);
 
         member.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
         invite.UsedAt = now;
 
         await memberStore.SaveChangesAsync(cancellationToken);
 
-        return (ToSession(member, "Account ready"), null);
+        return Result<MemberSessionResponse>.Success(ToSession(member, "Account ready"));
     }
 
-    public async Task<(MemberSessionResponse? Response, string? Error)> LoginAsync(
+    public async Task<Result<MemberSessionResponse>> LoginAsync(
         LoginMemberRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -58,16 +59,12 @@ public class MemberAuthService(IMemberStore memberStore, JwtTokenIssuer jwtToken
             .ToList();
 
         if (matches.Count == 0)
-            return (null, "Invalid email or password");
+            return Result<MemberSessionResponse>.Fail(ErrorCodes.InvalidCredentials);
 
         if (matches.Count > 1)
-        {
-            return (
-                null,
-                "This email belongs to more than one organization. Choose an organization to continue.");
-        }
+            return Result<MemberSessionResponse>.Fail(ErrorCodes.EmailAmbiguousOrg);
 
-        return (ToSession(matches[0], "Signed in"), null);
+        return Result<MemberSessionResponse>.Success(ToSession(matches[0], "Signed in"));
     }
 
     private MemberSessionResponse ToSession(Member member, string message) =>

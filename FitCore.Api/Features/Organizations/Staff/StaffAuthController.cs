@@ -1,3 +1,4 @@
+using FitCore.Api.Errors;
 using FitCore.Api.Features.Organizations.Staff.Activate;
 using FitCore.Api.Features.Organizations.Staff.Login;
 using Microsoft.AspNetCore.Authorization;
@@ -15,14 +16,14 @@ public class StaffAuthController(StaffAuthService staffAuthService) : Controller
         [FromBody] ActivateStaffRequest request,
         CancellationToken cancellationToken)
     {
-        var (response, error) = await staffAuthService.ActivateAsync(
+        var result = await staffAuthService.ActivateAsync(
             request,
             cancellationToken);
 
-        if (error is not null)
-            return BadRequest(new { message = error });
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
-        return Ok(response);
+        return Ok(result.Value);
     }
 
     [HttpPost("login")]
@@ -30,18 +31,13 @@ public class StaffAuthController(StaffAuthService staffAuthService) : Controller
         [FromBody] LoginStaffRequest request,
         CancellationToken cancellationToken)
     {
-        var (response, error) = await staffAuthService.LoginAsync(
+        var result = await staffAuthService.LoginAsync(
             request,
             cancellationToken);
 
-        if (error is not null)
-        {
-            if (error == "Invalid email or password")
-                return Unauthorized(new { message = error });
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
 
-            return BadRequest(new { message = error });
-        }
-
-        return Ok(response);
+        return Ok(result.Value);
     }
 }
