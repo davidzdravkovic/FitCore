@@ -1,4 +1,4 @@
-namespace FitCore.Api.Errors;
+namespace FitCore.Api.Errors.Exceptions;
 
 public sealed class EmailDeliveryException : Exception
 {

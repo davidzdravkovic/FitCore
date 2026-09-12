@@ -4,7 +4,7 @@ using FitCore.Api.Data.Stores.OrganizationOwner.AuthStore;
 using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
 using FitCore.Api.Data.Stores.OrganizationOwner.StaffStore;
 using FitCore.Api.Data.Stores.Platform;
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Exceptions;
 using FitCore.Api.Features.Platform.Invitations;
 using FitCore.Api.Features.Organizations.Admin.Auth;
 using FitCore.Api.Features.Organizations.Admin.Members;

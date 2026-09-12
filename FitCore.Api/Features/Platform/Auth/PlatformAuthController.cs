@@ -1,4 +1,4 @@
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Platform.Auth.Login;
 using FitCore.Api.Features.Platform.Auth.Verify;
 using Microsoft.AspNetCore.Authorization;

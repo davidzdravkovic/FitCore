@@ -1,4 +1,4 @@
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Staff.Activate;
 using FitCore.Api.Features.Organizations.Staff.Login;
 using Microsoft.AspNetCore.Authorization;

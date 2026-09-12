@@ -1,6 +1,6 @@
 using FitCore.Api.Data.Stores.Platform;
 using FitCore.Api.Domain.Enums;
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Business;
 
 namespace FitCore.Api.Features.Platform.Tenants;
 

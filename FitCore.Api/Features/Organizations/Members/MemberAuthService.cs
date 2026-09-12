@@ -1,7 +1,7 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
 using FitCore.Api.Domain.Enums;
 using FitCore.Api.Domain.Entities;
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Members.Activate;
 using FitCore.Api.Features.Organizations.Members.Login;
 using FitCore.Api.Infrastructure.Auth;

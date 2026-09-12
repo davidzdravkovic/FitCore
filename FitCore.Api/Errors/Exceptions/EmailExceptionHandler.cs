@@ -1,30 +1,33 @@
-using Microsoft.AspNetCore.Diagnostics;
 using System.Security.Claims;
-namespace FitCore.Api.Errors;
-public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+using Microsoft.AspNetCore.Diagnostics;
+
+namespace FitCore.Api.Errors.Exceptions;
+
+public sealed class EmailExceptionHandler(ILogger<EmailExceptionHandler> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
         CancellationToken cancellationToken)
     {
+        if (exception is not EmailDeliveryException)
+            return false;
+
         var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         logger.LogError(
             exception,
-            "Unhandled exception for {Method} {Path} (user {UserId})",
+            "Email delivery failed for {Method} {Path} (user {UserId})",
             httpContext.Request.Method,
             httpContext.Request.Path,
             userId ?? "anonymous");
 
-        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-      
+        httpContext.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+
         await httpContext.Response.WriteAsJsonAsync(
-            new { message = "Something went wrong." },
+            new { message = "Email service is temporarily unavailable. Try again." },
             cancellationToken);
 
         return true;
     }
 }
-
-

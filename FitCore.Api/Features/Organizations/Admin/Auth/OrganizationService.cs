@@ -3,7 +3,7 @@ using System.Text;
 using FitCore.Api.Data.Stores.OrganizationOwner.AuthStore;
 using FitCore.Api.Domain.Enums;
 using FitCore.Api.Domain.Entities;
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Auth.Login;
 using FitCore.Api.Features.Organizations.Admin.Auth.Register;
 using FitCore.Api.Infrastructure.Auth;

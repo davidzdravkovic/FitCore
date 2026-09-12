@@ -1,7 +1,7 @@
 using Amazon;
 using Amazon.SimpleEmail;
 using Amazon.SimpleEmail.Model;
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Exceptions;
 using FitCore.Api.Infrastructure.Aws;
 using Microsoft.Extensions.Options;
 

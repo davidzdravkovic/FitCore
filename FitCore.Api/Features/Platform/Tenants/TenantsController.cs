@@ -1,4 +1,4 @@
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Business;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

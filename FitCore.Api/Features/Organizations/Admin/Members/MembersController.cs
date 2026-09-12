@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Members.Create;
 using FitCore.Api.Features.Organizations.Admin.Members.Invite;
 using Microsoft.AspNetCore.Authorization;

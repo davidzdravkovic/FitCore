@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace FitCore.Api.Errors;
+namespace FitCore.Api.Errors.Business;
 
 public static class ErrorResults
 {

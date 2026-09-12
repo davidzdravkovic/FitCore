@@ -1,4 +1,4 @@
-namespace FitCore.Api.Errors;
+namespace FitCore.Api.Errors.Business;
 
 public sealed class Result
 {

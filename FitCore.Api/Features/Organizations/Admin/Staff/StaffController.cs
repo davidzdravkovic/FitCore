@@ -1,6 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using FitCore.Api.Errors;
+using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Staff.Create;
 using FitCore.Api.Features.Organizations.Admin.Staff.Invite;
 using Microsoft.AspNetCore.Authorization;
