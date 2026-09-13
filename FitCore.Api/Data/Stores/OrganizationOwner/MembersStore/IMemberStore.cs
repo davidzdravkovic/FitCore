@@ -24,6 +24,11 @@ public interface IMemberStore
 
     Task AddAsync(Member member);
 
+    Task<IReadOnlyList<Membership>> ListActiveMembershipsForMemberAsync(
+        Guid tenantId,
+        Guid memberId,
+        CancellationToken cancellationToken = default);
+
     Task<Member?> FindActiveByIdAsync(
         Guid tenantId,
         Guid memberId,

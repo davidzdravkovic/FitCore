@@ -13,11 +13,15 @@ public static class ErrorResults
         ErrorCodes.OrganizationNotFound
             or ErrorCodes.MemberNotFound
             or ErrorCodes.StaffNotFound
+            or ErrorCodes.ServiceNotFound
+            or ErrorCodes.PlanNotFound
             => new NotFoundObjectResult(Body(error)),
 
         ErrorCodes.MemberEmailTaken
             or ErrorCodes.MemberPhoneTaken
             or ErrorCodes.StaffEmailTaken
+            or ErrorCodes.ServiceNameTaken
+            or ErrorCodes.PlanNameTaken
             => new ConflictObjectResult(Body(error)),
 
         _ => new BadRequestObjectResult(Body(error)),
@@ -48,6 +52,10 @@ public static class ErrorResults
         ErrorCodes.StaffEmailTaken => "A staff member with this email already exists.",
         ErrorCodes.StaffUnavailable => "This staff account is no longer available.",
         ErrorCodes.CannotDeleteSelf => "You cannot delete your own staff account.",
+        ErrorCodes.ServiceNotFound => "Service not found.",
+        ErrorCodes.ServiceNameTaken => "A service with this name already exists.",
+        ErrorCodes.PlanNotFound => "Plan not found.",
+        ErrorCodes.PlanNameTaken => "A plan with this name already exists.",
         ErrorCodes.MissingTenantContext => "Missing tenant context.",
         _ => error,
     };

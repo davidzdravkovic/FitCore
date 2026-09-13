@@ -24,5 +24,11 @@ public static class ErrorCodes
     public const string StaffUnavailable = "staff-unavailable";
     public const string CannotDeleteSelf = "cannot-delete-self";
 
+    public const string ServiceNotFound = "service-not-found";
+    public const string ServiceNameTaken = "service-name-taken";
+
+    public const string PlanNotFound = "plan-not-found";
+    public const string PlanNameTaken = "plan-name-taken";
+
     public const string SignInLinkInvalidOrExpired = "sign-in-link-invalid-or-expired";
 }

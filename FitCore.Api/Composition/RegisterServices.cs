@@ -2,12 +2,18 @@ using System.Text;
 using FitCore.Api.Data;
 using FitCore.Api.Data.Stores.OrganizationOwner.AuthStore;
 using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
+using FitCore.Api.Data.Stores.OrganizationOwner.MembershipsStore;
+using FitCore.Api.Data.Stores.OrganizationOwner.PlansStore;
+using FitCore.Api.Data.Stores.OrganizationOwner.ServicesStore;
 using FitCore.Api.Data.Stores.OrganizationOwner.StaffStore;
 using FitCore.Api.Data.Stores.Platform;
 using FitCore.Api.Errors.Exceptions;
 using FitCore.Api.Features.Platform.Invitations;
 using FitCore.Api.Features.Organizations.Admin.Auth;
 using FitCore.Api.Features.Organizations.Admin.Members;
+using FitCore.Api.Features.Organizations.Admin.Memberships;
+using FitCore.Api.Features.Organizations.Admin.Plans;
+using FitCore.Api.Features.Organizations.Admin.Services;
 using FitCore.Api.Features.Organizations.Admin.Staff;
 using FitCore.Api.Features.Organizations.Members;
 using FitCore.Api.Features.Organizations.Staff;
@@ -57,6 +63,9 @@ public static class RegisterServices
         services.AddScoped<IOrganizationAuthStore, EfOrganizationAuthStore>();
         services.AddScoped<IStaffStore, EfStaffStore>();
         services.AddScoped<IMemberStore, EfMemberStore>();
+        services.AddScoped<IServiceStore, EfServiceStore>();
+        services.AddScoped<IPlanStore, EfPlanStore>();
+        services.AddScoped<IMembershipStore, EfMembershipStore>();
 
         services.AddScoped<PlatformAuthService>();
         services.AddScoped<InvitationService>();
@@ -65,6 +74,9 @@ public static class RegisterServices
         services.AddScoped<MemberAuthService>();
         services.AddScoped<StaffService>();
         services.AddScoped<StaffAuthService>();
+        services.AddScoped<GymServiceService>();
+        services.AddScoped<PlanService>();
+        services.AddScoped<MembershipService>();
         services.AddScoped<TenantService>();
         services.AddSingleton<JwtTokenIssuer>();
         services.AddSingleton<IClientLinks, ClientLinks>();

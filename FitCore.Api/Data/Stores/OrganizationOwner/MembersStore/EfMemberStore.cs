@@ -1,4 +1,5 @@
 using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
@@ -49,6 +50,19 @@ public class EfMemberStore(AppDbContext db) : IMemberStore
     {
         db.Members.Add(member);
         return Task.CompletedTask;
+    }
+
+    public async Task<IReadOnlyList<Membership>> ListActiveMembershipsForMemberAsync(
+        Guid tenantId,
+        Guid memberId,
+        CancellationToken cancellationToken = default)
+    {
+        return await db.Memberships
+            .Where(m =>
+                m.TenantId == tenantId
+                && m.MemberId == memberId
+                && m.Status == MembershipStatus.Active)
+            .ToListAsync(cancellationToken);
     }
 
     public Task<Member?> FindActiveByIdAsync(

@@ -92,6 +92,15 @@ public class MemberService(
             return Result.Fail(ErrorCodes.MemberNotFound);
 
         member.DeletedAt = DateTime.UtcNow;
+
+        var memberships = await memberStore.ListActiveMembershipsForMemberAsync(
+            tenantId,
+            memberId,
+            cancellationToken);
+
+        foreach (var membership in memberships)
+            membership.Status = MembershipStatus.Frozen;
+
         await memberStore.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
