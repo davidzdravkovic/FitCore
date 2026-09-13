@@ -14,7 +14,6 @@ public class MembershipPlan
 
     public string Name { get; set; } = null!;
     public decimal Price { get; set; }
-    public string Currency { get; set; } = "USD";
 
     public PlanEntitlementType EntitlementType { get; set; }
 

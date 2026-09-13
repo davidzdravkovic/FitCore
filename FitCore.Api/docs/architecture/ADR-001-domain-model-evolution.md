@@ -48,6 +48,7 @@ There are interactions between member <- coach, member <- admin, staff <- admin 
 
 `Membership` is composition of 2 ideas, what the business offers and what the client chooses. `Membership` is a model combination of the existing `Plan`. The `Plan` is composed of existing `Service` which carries the different catalog of services and a payload that gives a value to specific service with `price and sessions`. The member gives identity to the membership with time and number of disposed sessions.
 
-### 1.1 Member acquairing membership
+### 1.1 Member acquiring membership
 
-Starting with `Paymenet` as prerequsite, for FitCore version one that process is going to be outbounded payment. The admin should insert the `Payment` and then the member can acquire the membership. So `Payment` is related with the `Plan`, the `Payment` acquires the `Plan` so therefore the `Membership` is composed. **How flexible this process should be, is there a way of custom plans in a fly?**
+For FitCore v1, payment is **outbound** (outside the app). Admin assigns a membership from a catalog plan.
+

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FitCore.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260913162016_AddTenantCurrency")]
-    partial class AddTenantCurrency
+    [Migration("20260913173140_AddServicesPlansAndMemberships")]
+    partial class AddServicesPlansAndMemberships
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -210,11 +210,6 @@ namespace FitCore.Api.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)");
 
                     b.Property<int?>("DurationDays")
                         .HasColumnType("integer");

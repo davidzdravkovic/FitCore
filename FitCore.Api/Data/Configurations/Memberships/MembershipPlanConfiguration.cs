@@ -14,7 +14,6 @@ public sealed class MembershipPlanConfiguration : IEntityTypeConfiguration<Membe
 
         entity.Property(p => p.EntitlementType).HasConversion<string>();
         entity.Property(p => p.Price).HasPrecision(18, 2);
-        entity.Property(p => p.Currency).HasMaxLength(3);
 
         entity.HasOne(p => p.Tenant)
             .WithMany(t => t.MembershipPlans)

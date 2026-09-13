@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FitCore.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTenantCurrency : Migration
+    public partial class AddServicesPlansAndMemberships : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,7 +17,7 @@ namespace FitCore.Api.Migrations
                 type: "character varying(3)",
                 maxLength: 3,
                 nullable: false,
-                defaultValue: "USD");
+                defaultValue: "");
 
             migrationBuilder.CreateTable(
                 name: "Services",
@@ -50,7 +50,6 @@ namespace FitCore.Api.Migrations
                     ServiceId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    Currency = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     EntitlementType = table.Column<string>(type: "text", nullable: false),
                     SessionCount = table.Column<int>(type: "integer", nullable: true),
                     DurationDays = table.Column<int>(type: "integer", nullable: true),
