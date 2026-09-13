@@ -8,3 +8,6 @@ artifacts/
 # Local secrets
 appsettings.Development.json
 .env
+
+#Agents
+AGENTS.md

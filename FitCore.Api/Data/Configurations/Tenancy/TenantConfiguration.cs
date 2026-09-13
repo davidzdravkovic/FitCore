@@ -9,5 +9,6 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
     public void Configure(EntityTypeBuilder<Tenant> entity)
     {
         entity.Property(t => t.Status).HasConversion<string>();
+        entity.Property(t => t.Currency).HasMaxLength(3);
     }
 }

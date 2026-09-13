@@ -9,6 +9,7 @@ public record RegisterOrganizationRequest(
     [Required] string Country,
     [Required] string City,
     [Required] string TimeZone,
+    [Required, MinLength(3), MaxLength(3)] string Currency,
     [Required] string OwnerFirstName,
     [Required] string OwnerLastName,
     [Required, EmailAddress] string OwnerEmail,

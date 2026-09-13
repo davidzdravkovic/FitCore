@@ -44,6 +44,7 @@ public class OrganizationService(
             Country = request.Country.Trim(),
             City = request.City.Trim(),
             TimeZone = request.TimeZone.Trim(),
+            Currency = request.Currency.Trim().ToUpperInvariant(),
             CreatedAt = now,
             Status = TenantStatus.Active,
         };

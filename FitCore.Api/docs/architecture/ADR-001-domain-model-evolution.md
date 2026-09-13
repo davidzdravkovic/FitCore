@@ -41,3 +41,13 @@ At this stage, the model focuses on identity and tenant ownership rather than th
 ---
 
 ## Phase two - Operation entities
+
+There are interactions between member <- coach, member <- admin, staff <- admin and eventually platform -> tenant with well defined rules by the tenant/business and the platform. Puting aside the platform business operations, first prerequsit for tenant operations is  operativable member, operativable member is member that has a defined state and lifecycle by the business. The state would be represented with `Membership`. The business can operate on memberships a defined interface that covers the member. 
+
+### 1. Make operative member
+
+`Membership` is composition of 2 ideas, what the business offers and what the client chooses. `Membership` is a model combination of the existing `Plan`. The `Plan` is composed of existing `Service` which carries the different catalog of services and a payload that gives a value to specific service with `price and sessions`. The member gives identity to the membership with time and number of disposed sessions.
+
+### 1.1 Member acquairing membership
+
+Starting with `Paymenet` as prerequsite, for FitCore version one that process is going to be outbounded payment. The admin should insert the `Payment` and then the member can acquire the membership. So `Payment` is related with the `Plan`, the `Payment` acquires the `Plan` so therefore the `Membership` is composed. **How flexible this process should be, is there a way of custom plans in a fly?**

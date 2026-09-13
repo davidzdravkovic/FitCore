@@ -7,5 +7,6 @@ public record TenantResponse(
     string Country,
     string City,
     string TimeZone,
+    string Currency,
     string Status,
     DateTime CreatedAt);

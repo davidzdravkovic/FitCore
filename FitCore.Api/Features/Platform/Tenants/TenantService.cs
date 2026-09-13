@@ -19,6 +19,7 @@ public class TenantService(ITenantStore tenantStore)
                 t.Country,
                 t.City,
                 t.TimeZone,
+                t.Currency,
                 t.Status.ToString(),
                 t.CreatedAt))
             .ToList();

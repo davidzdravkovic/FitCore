@@ -10,6 +10,10 @@ public class Tenant
     public required string Country { get; set; }
     public required string City { get; set; }
     public required string TimeZone { get; set; }
+
+    /// <summary>ISO 4217 currency code for this gym's operating currency (e.g. USD, EUR).</summary>
+    public required string Currency { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public TenantStatus Status { get; set; }
 

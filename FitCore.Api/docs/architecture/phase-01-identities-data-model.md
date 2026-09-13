@@ -19,21 +19,27 @@ Each login belongs to one admin.
 
 One unique token represents one invitation.
 
-There can be only one pending invitation per tenant - email.
+There can be only one pending invitation per - email.
 
 Weird window nearly impossible to happen if 2 tenants share the same email, the first tenant invitation is discarded by the second tenant with the same email, in worst case the tenant should ask for invitation token again.
 UsedAt is nullable since defines the token validation.
+
+## Tenant
+
+At registration the owner sets the gym's operating **currency** (ISO 4217, 3 letters). Plans and amounts later default from this tenant currency - one currency per organization for v1.
 
 ## Members
 
 Needs at least to have some kind of contact: phone or mail.
 
-Makes uniqness on contact and the tenant where the user belongs, the tenant should not have 1 same contact for 2 different members.
+Makes uniqueness on contact and the tenant where the user belongs, the tenant should not have 1 same contact for 2 different members.
+Uniqueness is enforced only for active (not soft-deleted) rows: unique indexes filter `DeletedAt IS NULL` (and contact not null). Soft-deleted members do not block reusing the same email/phone on a new member in that tenant.
 Optional on password, the admin creates a member without it and later the member can create the credentials.
 
 ## Staff
 
 Can belong to one tenant, it needs to have a unique email for that tenant.
+Uniqueness is enforced only for active (not soft-deleted) rows: unique index on `(TenantId, Email)` filters `DeletedAt IS NULL`. Soft-deleted staff do not block reusing that email for a new staff in the same tenant.
 Optional on password, invitation imposes 2 phases of creation. The admin which is a staff and starts with the password, can create staff's that can create/own their credentials.
 
 ## Staff Invite
