@@ -9,5 +9,6 @@ artifacts/
 appsettings.Development.json
 .env
 
-#Agents
+# Agent / Cursor local rails (not committed)
 AGENTS.md
+.cursor/
