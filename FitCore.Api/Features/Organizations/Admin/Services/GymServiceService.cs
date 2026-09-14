@@ -30,6 +30,7 @@ public class GymServiceService(IServiceStore serviceStore)
         if (tenant.Status != TenantStatus.Active)
             return Result<ServiceResponse>.Fail(ErrorCodes.OrganizationNotActive);
 
+// There is unique index but the DB exceptions are not mapped into errors for that reason V1 has this check
         var name = request.Name.Trim();
         if (await serviceStore.NameTakenAsync(tenantId, name, cancellationToken))
             return Result<ServiceResponse>.Fail(ErrorCodes.ServiceNameTaken);

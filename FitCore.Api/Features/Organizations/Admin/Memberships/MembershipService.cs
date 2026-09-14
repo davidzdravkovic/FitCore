@@ -45,6 +45,7 @@ public class MembershipService(IMembershipStore membershipStore)
         if (plan is null)
             return Result<MembershipResponse>.Fail(ErrorCodes.PlanNotFound);
 
+//If there is no startAt supplied by the request then the request is not valid 
         var startAt = request.StartAt?.ToUniversalTime() ?? DateTime.UtcNow;
         if (startAt.Kind == DateTimeKind.Unspecified)
             startAt = DateTime.SpecifyKind(startAt, DateTimeKind.Utc);
@@ -77,7 +78,6 @@ public class MembershipService(IMembershipStore membershipStore)
         await membershipStore.AddAsync(membership);
         await membershipStore.SaveChangesAsync(cancellationToken);
 
-        // Navigations not loaded after Add; build response from known entities.
         membership.Member = member;
         membership.Plan = plan;
 
