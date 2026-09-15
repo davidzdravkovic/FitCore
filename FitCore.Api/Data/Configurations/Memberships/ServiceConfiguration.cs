@@ -1,4 +1,4 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

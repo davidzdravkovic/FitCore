@@ -1,5 +1,5 @@
-using FitCore.Api.Domain.Enums;
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Staffs;
+using FitCore.Api.Domain.Tenants;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.StaffStore;

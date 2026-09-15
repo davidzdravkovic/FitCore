@@ -1,7 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Platform;
+using FitCore.Api.Domain.Staffs;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 

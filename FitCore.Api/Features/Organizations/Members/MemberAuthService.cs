@@ -1,6 +1,6 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
-using FitCore.Api.Domain.Enums;
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Tenants;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Members.Activate;
 using FitCore.Api.Features.Organizations.Members.Login;
@@ -27,7 +27,7 @@ public class MemberAuthService(IMemberStore memberStore, JwtTokenIssuer jwtToken
 
         var member = invite.Member;
 
-        if (member.DeletedAt is not null)
+        if (!MemberStatusRules.IsOnRoster(member.Status))
             return Result<MemberSessionResponse>.Fail(ErrorCodes.MemberUnavailable);
 
         if (member.Tenant.Status != TenantStatus.Active)

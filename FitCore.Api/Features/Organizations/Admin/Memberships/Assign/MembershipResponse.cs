@@ -10,4 +10,7 @@ public record MembershipResponse(
     DateTime StartAt,
     DateTime? EndAt,
     int? SessionsRemaining,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? CancelReason = null,
+    string? CancelNote = null,
+    DateTime? CancelledAt = null);

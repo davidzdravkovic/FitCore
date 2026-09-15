@@ -4,7 +4,7 @@ namespace FitCore.Api.Errors.Business;
 
 public static class ErrorResults
 {
-    public static ActionResult From(string error) => error switch
+    public static ActionResult From(string error, object? details = null) => error switch
     {
         ErrorCodes.InvalidCredentials => new UnauthorizedObjectResult(Body(error)),
         ErrorCodes.MissingTenantContext => new UnauthorizedObjectResult(Body(error)),
@@ -15,6 +15,7 @@ public static class ErrorResults
             or ErrorCodes.StaffNotFound
             or ErrorCodes.ServiceNotFound
             or ErrorCodes.PlanNotFound
+            or ErrorCodes.MembershipNotFound
             => new NotFoundObjectResult(Body(error)),
 
         ErrorCodes.MemberEmailTaken
@@ -22,12 +23,19 @@ public static class ErrorResults
             or ErrorCodes.StaffEmailTaken
             or ErrorCodes.ServiceNameTaken
             or ErrorCodes.PlanNameTaken
-            => new ConflictObjectResult(Body(error)),
+            or ErrorCodes.MemberHasUnresolvedMemberships
+            => new ConflictObjectResult(Body(error, details)),
 
-        _ => new BadRequestObjectResult(Body(error)),
+        _ => new BadRequestObjectResult(Body(error, details)),
     };
 
-    private static object Body(string error) => new { message = ToMessage(error) };
+    private static object Body(string error, object? details = null)
+    {
+        if (details is null)
+            return new { message = ToMessage(error) };
+
+        return new { message = ToMessage(error), memberships = details };
+    }
 
     private static string ToMessage(string error) => error switch
     {
@@ -48,6 +56,8 @@ public static class ErrorResults
         ErrorCodes.MemberEmailRequired =>
             "This member needs an email before they can be invited.",
         ErrorCodes.MemberUnavailable => "This member account is no longer available.",
+        ErrorCodes.MemberHasUnresolvedMemberships =>
+            "This member still has active or frozen memberships. Resolve those before cancelling the member.",
         ErrorCodes.StaffNotFound => "Staff member not found.",
         ErrorCodes.StaffEmailTaken => "A staff member with this email already exists.",
         ErrorCodes.StaffUnavailable => "This staff account is no longer available.",
@@ -56,6 +66,9 @@ public static class ErrorResults
         ErrorCodes.ServiceNameTaken => "A service with this name already exists.",
         ErrorCodes.PlanNotFound => "Plan not found.",
         ErrorCodes.PlanNameTaken => "A plan with this name already exists.",
+        ErrorCodes.MembershipNotFound => "Membership not found.",
+        ErrorCodes.MembershipNotCancellable =>
+            "Only active or frozen memberships can be cancelled.",
         ErrorCodes.MissingTenantContext => "Missing tenant context.",
         _ => error,
     };

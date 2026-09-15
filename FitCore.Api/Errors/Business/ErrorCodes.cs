@@ -18,6 +18,7 @@ public static class ErrorCodes
     public const string MemberPhoneTaken = "member-phone-taken";
     public const string MemberEmailRequired = "member-email-required";
     public const string MemberUnavailable = "member-unavailable";
+    public const string MemberHasUnresolvedMemberships = "member-has-unresolved-memberships";
 
     public const string StaffNotFound = "staff-not-found";
     public const string StaffEmailTaken = "staff-email-taken";
@@ -29,6 +30,9 @@ public static class ErrorCodes
 
     public const string PlanNotFound = "plan-not-found";
     public const string PlanNameTaken = "plan-name-taken";
+
+    public const string MembershipNotFound = "membership-not-found";
+    public const string MembershipNotCancellable = "membership-not-cancellable";
 
     public const string SignInLinkInvalidOrExpired = "sign-in-link-invalid-or-expired";
 }

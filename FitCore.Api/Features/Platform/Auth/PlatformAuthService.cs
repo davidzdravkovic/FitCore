@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using FitCore.Api.Data.Stores.Platform;
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Platform;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Auth;

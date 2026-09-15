@@ -1,6 +1,8 @@
-using FitCore.Api.Domain.Enums;
+using FitCore.Api.Domain.Memberships;
+using FitCore.Api.Domain.Services;
+using FitCore.Api.Domain.Tenants;
 
-namespace FitCore.Api.Domain.Entities;
+namespace FitCore.Api.Domain.Plans;
 
 public class MembershipPlan
 {
@@ -17,10 +19,8 @@ public class MembershipPlan
 
     public PlanEntitlementType EntitlementType { get; set; }
 
-    /// <summary>For session packs: how many sessions the plan includes.</summary>
     public int? SessionCount { get; set; }
 
-    /// <summary>For time-period plans: length of access in days (e.g. 30).</summary>
     public int? DurationDays { get; set; }
 
     public bool IsActive { get; set; } = true;

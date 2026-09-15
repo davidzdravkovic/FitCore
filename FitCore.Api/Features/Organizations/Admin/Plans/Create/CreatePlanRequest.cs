@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using FitCore.Api.Domain.Enums;
+using FitCore.Api.Domain.Plans;
 
 namespace FitCore.Api.Features.Organizations.Admin.Plans.Create;
 

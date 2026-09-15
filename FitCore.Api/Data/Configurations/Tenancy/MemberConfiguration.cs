@@ -1,4 +1,4 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Members;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -21,12 +21,12 @@ public sealed class MemberConfiguration : IEntityTypeConfiguration<Member>
 
         entity.HasIndex(m => new { m.TenantId, m.Email })
             .IsUnique()
-            .HasFilter("\"Email\" IS NOT NULL AND \"DeletedAt\" IS NULL")
+            .HasFilter("\"Email\" IS NOT NULL AND \"Status\" <> 'Cancelled'")
             .HasDatabaseName("IX_Members_TenantId_Email");
 
         entity.HasIndex(m => new { m.TenantId, m.Phone })
             .IsUnique()
-            .HasFilter("\"Phone\" IS NOT NULL AND \"DeletedAt\" IS NULL")
+            .HasFilter("\"Phone\" IS NOT NULL AND \"Status\" <> 'Cancelled'")
             .HasDatabaseName("IX_Members_TenantId_Phone");
     }
 }

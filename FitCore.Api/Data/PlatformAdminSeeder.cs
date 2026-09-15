@@ -1,4 +1,4 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Platform;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data;

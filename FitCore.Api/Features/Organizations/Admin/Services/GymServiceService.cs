@@ -1,6 +1,6 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.ServicesStore;
-using FitCore.Api.Domain.Enums;
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Services;
+using FitCore.Api.Domain.Tenants;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Services.Create;
 

@@ -1,13 +1,14 @@
 using System.Security.Cryptography;
 using System.Text;
 using FitCore.Api.Data.Stores.OrganizationOwner.AuthStore;
-using FitCore.Api.Domain.Enums;
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Platform;
+using FitCore.Api.Domain.Staffs;
+using FitCore.Api.Domain.Tenants;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Auth.Login;
 using FitCore.Api.Features.Organizations.Admin.Auth.Register;
 using FitCore.Api.Infrastructure.Auth;
-using StaffEntity = FitCore.Api.Domain.Entities.Staff;
+using StaffEntity = FitCore.Api.Domain.Staffs.Staff;
 
 namespace FitCore.Api.Features.Organizations.Admin.Auth;
 

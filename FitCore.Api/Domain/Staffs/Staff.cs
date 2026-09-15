@@ -1,7 +1,6 @@
-using FitCore.Api.Domain.Enums;
+using FitCore.Api.Domain.Tenants;
 
-namespace FitCore.Api.Domain.Entities;
-
+namespace FitCore.Api.Domain.Staffs;
 
 public class Staff
 {

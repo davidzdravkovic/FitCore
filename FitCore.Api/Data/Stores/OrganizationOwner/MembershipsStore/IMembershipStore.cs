@@ -1,4 +1,7 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Memberships;
+using FitCore.Api.Domain.Plans;
+using FitCore.Api.Domain.Tenants;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.MembershipsStore;
 
@@ -20,6 +23,17 @@ public interface IMembershipStore
     Task<MembershipPlan?> FindActivePlanAsync(
         Guid tenantId,
         Guid planId,
+        CancellationToken cancellationToken = default);
+
+    Task<Membership?> FindByIdForCancelAsync(
+        Guid tenantId,
+        Guid membershipId,
+        CancellationToken cancellationToken = default);
+
+    Task<int> CountActiveMembershipsForMemberAsync(
+        Guid tenantId,
+        Guid memberId,
+        Guid excludeMembershipId,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(Membership membership);

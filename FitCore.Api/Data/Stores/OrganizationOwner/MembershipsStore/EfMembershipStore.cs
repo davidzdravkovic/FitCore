@@ -1,4 +1,7 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Memberships;
+using FitCore.Api.Domain.Plans;
+using FitCore.Api.Domain.Tenants;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.MembershipsStore;
@@ -33,9 +36,10 @@ public class EfMembershipStore(AppDbContext db) : IMembershipStore
         CancellationToken cancellationToken = default)
     {
         return db.Members
-            .AsNoTracking()
             .FirstOrDefaultAsync(
-                m => m.TenantId == tenantId && m.Id == memberId && m.DeletedAt == null,
+                m => m.TenantId == tenantId
+                    && m.Id == memberId
+                    && MemberStatusRules.CanAssign.Contains(m.Status),
                 cancellationToken);
     }
 
@@ -49,6 +53,33 @@ public class EfMembershipStore(AppDbContext db) : IMembershipStore
             .FirstOrDefaultAsync(
                 p => p.TenantId == tenantId && p.Id == planId && p.IsActive,
                 cancellationToken);
+    }
+
+    public Task<Membership?> FindByIdForCancelAsync(
+        Guid tenantId,
+        Guid membershipId,
+        CancellationToken cancellationToken = default)
+    {
+        return db.Memberships
+            .Include(m => m.Member)
+            .Include(m => m.Plan)
+            .FirstOrDefaultAsync(
+                m => m.TenantId == tenantId && m.Id == membershipId,
+                cancellationToken);
+    }
+
+    public Task<int> CountActiveMembershipsForMemberAsync(
+        Guid tenantId,
+        Guid memberId,
+        Guid excludeMembershipId,
+        CancellationToken cancellationToken = default)
+    {
+        return db.Memberships.CountAsync(
+            m => m.TenantId == tenantId
+                && m.MemberId == memberId
+                && m.Id != excludeMembershipId
+                && m.Status == MembershipStatus.Active,
+            cancellationToken);
     }
 
     public Task AddAsync(Membership membership)

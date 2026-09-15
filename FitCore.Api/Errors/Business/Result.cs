@@ -3,12 +3,17 @@ namespace FitCore.Api.Errors.Business;
 public sealed class Result
 {
     public string? Error { get; }
+    public object? Details { get; }
     public bool Succeeded => Error is null;
 
-    private Result(string? error) => Error = error;
+    private Result(string? error, object? details = null)
+    {
+        Error = error;
+        Details = details;
+    }
 
     public static Result Success() => new(null);
-    public static Result Fail(string error) => new(error);
+    public static Result Fail(string error, object? details = null) => new(error, details);
 }
 
 public sealed class Result<T>

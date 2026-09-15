@@ -1,12 +1,10 @@
 using System.ComponentModel.DataAnnotations;
-using FitCore.Api.Domain.Enums;
 
 namespace FitCore.Api.Features.Organizations.Admin.Members.Create;
 
 public record CreateMemberRequest(
     [Required] string FirstName,
     [Required] string LastName,
-    [Required] string Status,
     string? Email = null,
     string? Phone = null) : IValidatableObject
 {
@@ -29,13 +27,21 @@ public record CreateMemberRequest(
                 [nameof(Email)]);
         }
 
-        if (string.IsNullOrWhiteSpace(Status)
-            || !Enum.TryParse<MemberStatus>(Status.Trim(), ignoreCase: true, out var status)
-            || status is not (MemberStatus.Lead or MemberStatus.Active))
+        if (!string.IsNullOrEmpty(phone) && !IsValidPhone(phone))
         {
             yield return new ValidationResult(
-                "Status must be Lead or Active.",
-                [nameof(Status)]);
+                "Enter a valid phone number.",
+                [nameof(Phone)]);
         }
+    }
+
+    private static bool IsValidPhone(string phone)
+    {
+        // Digits with optional +, spaces, dashes, parentheses — not emails/text.
+        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[\d\s\-().]+$"))
+            return false;
+
+        var digits = System.Text.RegularExpressions.Regex.Replace(phone, @"\D", "");
+        return digits.Length is >= 7 and <= 15;
     }
 }

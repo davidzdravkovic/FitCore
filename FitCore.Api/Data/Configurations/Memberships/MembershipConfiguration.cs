@@ -1,4 +1,4 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Memberships;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -11,6 +11,8 @@ public sealed class MembershipConfiguration : IEntityTypeConfiguration<Membershi
         entity.ToTable("Memberships");
 
         entity.Property(m => m.Status).HasConversion<string>();
+        entity.Property(m => m.CancelReason).HasConversion<string>();
+        entity.Property(m => m.CancelNote).HasMaxLength(500);
 
         entity.HasOne(m => m.Tenant)
             .WithMany(t => t.Memberships)
@@ -26,6 +28,11 @@ public sealed class MembershipConfiguration : IEntityTypeConfiguration<Membershi
             .WithMany(p => p.Memberships)
             .HasForeignKey(m => m.PlanId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(m => m.CancelledByStaff)
+            .WithMany()
+            .HasForeignKey(m => m.CancelledByStaffId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         entity.HasIndex(m => new { m.TenantId, m.MemberId, m.Status })
             .HasDatabaseName("IX_Memberships_TenantId_MemberId_Status");

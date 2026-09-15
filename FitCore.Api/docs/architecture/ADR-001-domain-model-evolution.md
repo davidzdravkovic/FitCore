@@ -42,7 +42,13 @@ At this stage, the model focuses on identity and tenant ownership rather than th
 
 ## Phase two - Operation entities
 
-There are interactions between member <- coach, member <- admin, staff <- admin and eventually platform -> tenant with well defined rules by the tenant/business and the platform. Puting aside the platform business operations, first prerequsit for tenant operations is  operativable member, operativable member is member that has a defined state and lifecycle by the business. The state would be represented with `Membership`. The business can operate on memberships a defined interface that covers the member. 
+There are interactions between member <- coach, member <- admin, staff <- admin and eventually platform -> tenant with well defined rules by the tenant/business and the platform. Puting aside the platform business operations, first prerequsit for tenant operations is  operatable member, operetable member is member that has a defined state and lifecycle by the business. The state would be represented with `Membership`. The business can operate on memberships a defined interface that covers the member.
+
+Identity phase promises isolation on tenant managing its own `resources` for creation and leave-roster (`Cancelled`), plus a few states on created identities.
+The membership is the glue that connects a promise from the identity: `Lead`, `Paused`, and `Active` can receive a membership assignment; the membership is what the operations care about. Assign promotes `Lead` or `Paused` to `Active`.
+`Lead` is a new prospect created via Add member (always starts as Lead). `Paused` is a known client with no ongoing usable membership (Import v1: same fields as create, status Paused). `Active` means they have entitlement they can dispose — only via assign, never on create. `Cancelled` leaves the roster (contacts free, out of default lists/BI). Temporary entitlement holds use `MembershipStatus.Frozen`, not member Paused.
+Cancelling a member is refused while any `Active` or `Frozen` membership remains; the admin must resolve those entitlements first (policy/liability). Only then can the member be set to `Cancelled`.
+Admin cancels a membership with reason `MemberRequest` or `AdminDecision` (actor = owner staff id from JWT). After cancel, if the member has no remaining `Active` memberships, member status becomes `Paused`.
 
 ### 1. Make operative member
 

@@ -1,4 +1,5 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Services;
+using FitCore.Api.Domain.Tenants;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.ServicesStore;
 

@@ -1,4 +1,4 @@
-namespace FitCore.Api.Domain.Entities;
+namespace FitCore.Api.Domain.Platform;
 
 public class PlatformAdmin
 {

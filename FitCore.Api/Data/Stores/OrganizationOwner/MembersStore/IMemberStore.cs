@@ -1,4 +1,6 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Memberships;
+using FitCore.Api.Domain.Tenants;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
 
@@ -24,7 +26,7 @@ public interface IMemberStore
 
     Task AddAsync(Member member);
 
-    Task<IReadOnlyList<Membership>> ListActiveMembershipsForMemberAsync(
+    Task<IReadOnlyList<Membership>> ListUnresolvedMembershipsForMemberAsync(
         Guid tenantId,
         Guid memberId,
         CancellationToken cancellationToken = default);

@@ -1,6 +1,9 @@
-using FitCore.Api.Domain.Enums;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Plans;
+using FitCore.Api.Domain.Staffs;
+using FitCore.Api.Domain.Tenants;
 
-namespace FitCore.Api.Domain.Entities;
+namespace FitCore.Api.Domain.Memberships;
 
 public class Membership
 {
@@ -20,8 +23,13 @@ public class Membership
     public DateTime StartAt { get; set; }
     public DateTime? EndAt { get; set; }
 
-    /// <summary>Remaining sessions for pack plans; null for time-period plans.</summary>
     public int? SessionsRemaining { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public MembershipCancelReason? CancelReason { get; set; }
+    public string? CancelNote { get; set; }
+    public DateTime? CancelledAt { get; set; }
+    public Guid? CancelledByStaffId { get; set; }
+    public Staff? CancelledByStaff { get; set; }
 }

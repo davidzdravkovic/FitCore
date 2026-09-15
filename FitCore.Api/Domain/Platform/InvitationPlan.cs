@@ -1,4 +1,4 @@
-namespace FitCore.Api.Domain.Enums;
+namespace FitCore.Api.Domain.Platform;
 
 public enum InvitationPlan
 {

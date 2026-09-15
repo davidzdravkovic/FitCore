@@ -1,6 +1,10 @@
-using FitCore.Api.Domain.Enums;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Memberships;
+using FitCore.Api.Domain.Plans;
+using FitCore.Api.Domain.Services;
+using FitCore.Api.Domain.Staffs;
 
-namespace FitCore.Api.Domain.Entities;
+namespace FitCore.Api.Domain.Tenants;
 
 public class Tenant
 {

@@ -1,4 +1,7 @@
-namespace FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Plans;
+using FitCore.Api.Domain.Tenants;
+
+namespace FitCore.Api.Domain.Services;
 
 public class Service
 {

@@ -1,7 +1,8 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
-using FitCore.Api.Domain.Enums;
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Tenants;
 using FitCore.Api.Errors.Business;
+using FitCore.Api.Features.Organizations.Admin.Members.Cancel;
 using FitCore.Api.Features.Organizations.Admin.Members.Create;
 using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Auth;
@@ -34,10 +35,23 @@ public class MemberService(
             .ToList();
     }
 
-    public async Task<Result<MemberResponse>> CreateAsync(
+    public Task<Result<MemberResponse>> CreateAsync(
         Guid tenantId,
         CreateMemberRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        AddAsync(tenantId, request, MemberStatus.Lead, cancellationToken);
+
+    public Task<Result<MemberResponse>> ImportAsync(
+        Guid tenantId,
+        CreateMemberRequest request,
+        CancellationToken cancellationToken = default) =>
+        AddAsync(tenantId, request, MemberStatus.Paused, cancellationToken);
+
+    private async Task<Result<MemberResponse>> AddAsync(
+        Guid tenantId,
+        CreateMemberRequest request,
+        MemberStatus status,
+        CancellationToken cancellationToken)
     {
         var tenant = await memberStore.FindTenantByIdAsync(tenantId, cancellationToken);
 
@@ -49,7 +63,6 @@ public class MemberService(
 
         var email = NormalizeEmail(request.Email);
         var phone = NormalizePhone(request.Phone);
-        var status = Enum.Parse<MemberStatus>(request.Status.Trim(), ignoreCase: true);
 
         if (email is not null)
         {
@@ -81,7 +94,7 @@ public class MemberService(
         return Result<MemberResponse>.Success(ToResponse(member));
     }
 
-    public async Task<Result> SoftDeleteAsync(
+    public async Task<Result> CancelAsync(
         Guid tenantId,
         Guid memberId,
         CancellationToken cancellationToken = default)
@@ -91,16 +104,28 @@ public class MemberService(
         if (member is null)
             return Result.Fail(ErrorCodes.MemberNotFound);
 
-        member.DeletedAt = DateTime.UtcNow;
-
-        var memberships = await memberStore.ListActiveMembershipsForMemberAsync(
+        var unresolved = await memberStore.ListUnresolvedMembershipsForMemberAsync(
             tenantId,
             memberId,
             cancellationToken);
 
-        foreach (var membership in memberships)
-            membership.Status = MembershipStatus.Frozen;
+        if (unresolved.Count > 0)
+        {
+            var details = unresolved
+                .Select(m => new UnresolvedMembershipResponse(
+                    m.Id,
+                    m.PlanId,
+                    m.Plan.Name,
+                    m.Status.ToString(),
+                    m.StartAt,
+                    m.EndAt,
+                    m.SessionsRemaining))
+                .ToList();
 
+            return Result.Fail(ErrorCodes.MemberHasUnresolvedMemberships, details);
+        }
+
+        member.Status = MemberStatus.Cancelled;
         await memberStore.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

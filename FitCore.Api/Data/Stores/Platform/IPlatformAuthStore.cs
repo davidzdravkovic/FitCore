@@ -1,4 +1,4 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Platform;
 
 namespace FitCore.Api.Data.Stores.Platform;
 

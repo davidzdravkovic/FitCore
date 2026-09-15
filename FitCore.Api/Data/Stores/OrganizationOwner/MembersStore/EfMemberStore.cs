@@ -1,5 +1,6 @@
-using FitCore.Api.Domain.Entities;
-using FitCore.Api.Domain.Enums;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Memberships;
+using FitCore.Api.Domain.Tenants;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
@@ -12,7 +13,7 @@ public class EfMemberStore(AppDbContext db) : IMemberStore
     {
         return await db.Members
             .AsNoTracking()
-            .Where(m => m.TenantId == tenantId && m.DeletedAt == null)
+            .Where(m => m.TenantId == tenantId && MemberStatusRules.OnRoster.Contains(m.Status))
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -32,7 +33,9 @@ public class EfMemberStore(AppDbContext db) : IMemberStore
         CancellationToken cancellationToken = default)
     {
         return db.Members.AnyAsync(
-            m => m.TenantId == tenantId && m.Email == normalizedEmail && m.DeletedAt == null,
+            m => m.TenantId == tenantId
+                && m.Email == normalizedEmail
+                && MemberStatusRules.OnRoster.Contains(m.Status),
             cancellationToken);
     }
 
@@ -42,7 +45,9 @@ public class EfMemberStore(AppDbContext db) : IMemberStore
         CancellationToken cancellationToken = default)
     {
         return db.Members.AnyAsync(
-            m => m.TenantId == tenantId && m.Phone == phone && m.DeletedAt == null,
+            m => m.TenantId == tenantId
+                && m.Phone == phone
+                && MemberStatusRules.OnRoster.Contains(m.Status),
             cancellationToken);
     }
 
@@ -52,16 +57,18 @@ public class EfMemberStore(AppDbContext db) : IMemberStore
         return Task.CompletedTask;
     }
 
-    public async Task<IReadOnlyList<Membership>> ListActiveMembershipsForMemberAsync(
+    public async Task<IReadOnlyList<Membership>> ListUnresolvedMembershipsForMemberAsync(
         Guid tenantId,
         Guid memberId,
         CancellationToken cancellationToken = default)
     {
         return await db.Memberships
+            .Include(m => m.Plan)
             .Where(m =>
                 m.TenantId == tenantId
                 && m.MemberId == memberId
-                && m.Status == MembershipStatus.Active)
+                && MembershipStatusRules.Unresolved.Contains(m.Status))
+            .OrderByDescending(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
@@ -71,7 +78,9 @@ public class EfMemberStore(AppDbContext db) : IMemberStore
         CancellationToken cancellationToken = default)
     {
         return db.Members.FirstOrDefaultAsync(
-            m => m.Id == memberId && m.TenantId == tenantId && m.DeletedAt == null,
+            m => m.Id == memberId
+                && m.TenantId == tenantId
+                && MemberStatusRules.OnRoster.Contains(m.Status),
             cancellationToken);
     }
 
@@ -83,7 +92,9 @@ public class EfMemberStore(AppDbContext db) : IMemberStore
         return db.Members
             .Include(m => m.Tenant)
             .FirstOrDefaultAsync(
-                m => m.Id == memberId && m.TenantId == tenantId && m.DeletedAt == null,
+                m => m.Id == memberId
+                    && m.TenantId == tenantId
+                    && MemberStatusRules.OnRoster.Contains(m.Status),
                 cancellationToken);
     }
 
@@ -129,7 +140,7 @@ public class EfMemberStore(AppDbContext db) : IMemberStore
     {
         return await db.Members
             .Include(m => m.Tenant)
-            .Where(m => m.Email == normalizedEmail && m.DeletedAt == null)
+            .Where(m => m.Email == normalizedEmail && MemberStatusRules.OnRoster.Contains(m.Status))
             .ToListAsync(cancellationToken);
     }
 

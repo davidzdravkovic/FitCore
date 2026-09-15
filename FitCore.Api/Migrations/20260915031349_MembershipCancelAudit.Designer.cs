@@ -3,6 +3,7 @@ using System;
 using FitCore.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FitCore.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260915031349_MembershipCancelAudit")]
+    partial class MembershipCancelAudit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,7 +25,7 @@ namespace FitCore.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FitCore.Api.Domain.Platform.Invitation", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Invitation", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -62,7 +65,7 @@ namespace FitCore.Api.Migrations
                     b.ToTable("Invitations");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Members.Member", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Member", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -113,7 +116,7 @@ namespace FitCore.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Members.MemberInvite", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.MemberInvite", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -153,7 +156,7 @@ namespace FitCore.Api.Migrations
                     b.ToTable("MemberInvites");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Memberships.Membership", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Membership", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -211,7 +214,7 @@ namespace FitCore.Api.Migrations
                     b.ToTable("Memberships", (string)null);
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Plans.MembershipPlan", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.MembershipPlan", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -261,7 +264,7 @@ namespace FitCore.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Platform.PlatformAdmin", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.PlatformAdmin", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -286,7 +289,7 @@ namespace FitCore.Api.Migrations
                     b.ToTable("PlatformAdmins");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Platform.PlatformLoginToken", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.PlatformLoginToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -321,7 +324,7 @@ namespace FitCore.Api.Migrations
                     b.ToTable("PlatformLoginTokens");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Services.Service", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Service", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -352,7 +355,7 @@ namespace FitCore.Api.Migrations
                     b.ToTable("Services", (string)null);
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Staffs.Staff", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Staff", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -393,7 +396,7 @@ namespace FitCore.Api.Migrations
                     b.ToTable("Staff", (string)null);
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Staffs.StaffInvite", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.StaffInvite", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -433,7 +436,7 @@ namespace FitCore.Api.Migrations
                     b.ToTable("StaffInvites");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Tenants.Tenant", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -476,9 +479,9 @@ namespace FitCore.Api.Migrations
                     b.ToTable("Tenants");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Members.Member", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Member", b =>
                 {
-                    b.HasOne("FitCore.Api.Domain.Tenants.Tenant", "Tenant")
+                    b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Members")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -487,15 +490,15 @@ namespace FitCore.Api.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Members.MemberInvite", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.MemberInvite", b =>
                 {
-                    b.HasOne("FitCore.Api.Domain.Members.Member", "Member")
+                    b.HasOne("FitCore.Api.Domain.Entities.Member", "Member")
                         .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FitCore.Api.Domain.Tenants.Tenant", "Tenant")
+                    b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -506,26 +509,26 @@ namespace FitCore.Api.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Memberships.Membership", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Membership", b =>
                 {
-                    b.HasOne("FitCore.Api.Domain.Staffs.Staff", "CancelledByStaff")
+                    b.HasOne("FitCore.Api.Domain.Entities.Staff", "CancelledByStaff")
                         .WithMany()
                         .HasForeignKey("CancelledByStaffId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("FitCore.Api.Domain.Members.Member", "Member")
+                    b.HasOne("FitCore.Api.Domain.Entities.Member", "Member")
                         .WithMany("Memberships")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FitCore.Api.Domain.Plans.MembershipPlan", "Plan")
+                    b.HasOne("FitCore.Api.Domain.Entities.MembershipPlan", "Plan")
                         .WithMany("Memberships")
                         .HasForeignKey("PlanId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("FitCore.Api.Domain.Tenants.Tenant", "Tenant")
+                    b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Memberships")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -540,15 +543,15 @@ namespace FitCore.Api.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Plans.MembershipPlan", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.MembershipPlan", b =>
                 {
-                    b.HasOne("FitCore.Api.Domain.Services.Service", "Service")
+                    b.HasOne("FitCore.Api.Domain.Entities.Service", "Service")
                         .WithMany("Plans")
                         .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("FitCore.Api.Domain.Tenants.Tenant", "Tenant")
+                    b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
                         .WithMany("MembershipPlans")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -559,9 +562,9 @@ namespace FitCore.Api.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Platform.PlatformLoginToken", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.PlatformLoginToken", b =>
                 {
-                    b.HasOne("FitCore.Api.Domain.Platform.PlatformAdmin", "PlatformAdmin")
+                    b.HasOne("FitCore.Api.Domain.Entities.PlatformAdmin", "PlatformAdmin")
                         .WithMany()
                         .HasForeignKey("PlatformAdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -570,9 +573,9 @@ namespace FitCore.Api.Migrations
                     b.Navigation("PlatformAdmin");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Services.Service", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Service", b =>
                 {
-                    b.HasOne("FitCore.Api.Domain.Tenants.Tenant", "Tenant")
+                    b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Services")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -581,9 +584,9 @@ namespace FitCore.Api.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Staffs.Staff", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Staff", b =>
                 {
-                    b.HasOne("FitCore.Api.Domain.Tenants.Tenant", "Tenant")
+                    b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Staff")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -592,15 +595,15 @@ namespace FitCore.Api.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Staffs.StaffInvite", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.StaffInvite", b =>
                 {
-                    b.HasOne("FitCore.Api.Domain.Staffs.Staff", "Staff")
+                    b.HasOne("FitCore.Api.Domain.Entities.Staff", "Staff")
                         .WithMany()
                         .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FitCore.Api.Domain.Tenants.Tenant", "Tenant")
+                    b.HasOne("FitCore.Api.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -611,22 +614,22 @@ namespace FitCore.Api.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Members.Member", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Member", b =>
                 {
                     b.Navigation("Memberships");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Plans.MembershipPlan", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.MembershipPlan", b =>
                 {
                     b.Navigation("Memberships");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Services.Service", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Service", b =>
                 {
                     b.Navigation("Plans");
                 });
 
-            modelBuilder.Entity("FitCore.Api.Domain.Tenants.Tenant", b =>
+            modelBuilder.Entity("FitCore.Api.Domain.Entities.Tenant", b =>
                 {
                     b.Navigation("Members");
 

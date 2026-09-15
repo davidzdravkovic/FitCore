@@ -1,10 +1,10 @@
-namespace FitCore.Api.Domain.Entities;
+namespace FitCore.Api.Domain.Platform;
 
-public class PlatformLoginToken
+public class Invitation
 {
     public Guid Id { get; set; }
-    public Guid PlatformAdminId { get; set; }
-    public PlatformAdmin PlatformAdmin { get; set; } = null!;
+    public required string Email { get; set; }
+    public InvitationPlan Plan { get; set; }
     public required string TokenHash { get; set; }
     public DateTime ExpiresAt { get; set; }
     public DateTime? UsedAt { get; set; }

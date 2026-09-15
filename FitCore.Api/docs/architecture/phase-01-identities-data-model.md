@@ -32,8 +32,9 @@ At registration the owner sets the gym's operating **currency** (ISO 4217, 3 let
 
 Needs at least to have some kind of contact: phone or mail.
 
+
 Makes uniqueness on contact and the tenant where the user belongs, the tenant should not have 1 same contact for 2 different members.
-Uniqueness is enforced only for active (not soft-deleted) rows: unique indexes filter `DeletedAt IS NULL` (and contact not null). Soft-deleted members do not block reusing the same email/phone on a new member in that tenant.
+Uniqueness is enforced only for non-cancelled rows: unique indexes filter `Status <> 'Cancelled'` (and contact not null). 
 Optional on password, the admin creates a member without it and later the member can create the credentials.
 
 ## Staff

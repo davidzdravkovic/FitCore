@@ -1,4 +1,10 @@
-using FitCore.Api.Domain.Entities;
+using FitCore.Api.Domain.Members;
+using FitCore.Api.Domain.Memberships;
+using FitCore.Api.Domain.Plans;
+using FitCore.Api.Domain.Platform;
+using FitCore.Api.Domain.Services;
+using FitCore.Api.Domain.Staffs;
+using FitCore.Api.Domain.Tenants;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data;

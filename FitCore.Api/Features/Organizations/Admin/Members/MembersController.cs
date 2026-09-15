@@ -44,6 +44,26 @@ public class MembersController(MemberService memberService) : ControllerBase
         return Ok(result.Value);
     }
 
+    [HttpPost("import")]
+    public async Task<ActionResult<MemberResponse>> Import(
+        [FromBody] CreateMemberRequest request,
+        CancellationToken cancellationToken)
+    {
+        var tenantIdClaim = User.FindFirstValue("tenant_id");
+        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
+            return ErrorResults.From(ErrorCodes.MissingTenantContext);
+
+        var result = await memberService.ImportAsync(
+            tenantId,
+            request,
+            cancellationToken);
+
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
+
+        return Ok(result.Value);
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(
         Guid id,
@@ -53,13 +73,13 @@ public class MembersController(MemberService memberService) : ControllerBase
         if (!Guid.TryParse(tenantIdClaim, out var tenantId))
             return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
-        var result = await memberService.SoftDeleteAsync(
+        var result = await memberService.CancelAsync(
             tenantId,
             id,
             cancellationToken);
 
         if (!result.Succeeded)
-            return ErrorResults.From(result.Error!);
+            return ErrorResults.From(result.Error!, result.Details);
 
         return NoContent();
     }
