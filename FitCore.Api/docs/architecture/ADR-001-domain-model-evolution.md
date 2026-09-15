@@ -44,15 +44,51 @@ At this stage, the model focuses on identity and tenant ownership rather than th
 
 There are interactions between member <- coach, member <- admin, staff <- admin and eventually platform -> tenant with well defined rules by the tenant/business and the platform. Puting aside the platform business operations, first prerequsit for tenant operations is  operatable member, operetable member is member that has a defined state and lifecycle by the business. The state would be represented with `Membership`. The business can operate on memberships a defined interface that covers the member.
 
-Identity phase promises isolation on tenant managing its own `resources` for creation and leave-roster (`Cancelled`), plus a few states on created identities.
-The membership is the glue that connects a promise from the identity: `Lead`, `Paused`, and `Active` can receive a membership assignment; the membership is what the operations care about. Assign promotes `Lead` or `Paused` to `Active`.
-`Lead` is a new prospect created via Add member (always starts as Lead). `Paused` is a known client with no ongoing usable membership (Import v1: same fields as create, status Paused). `Active` means they have entitlement they can dispose — only via assign, never on create. `Cancelled` leaves the roster (contacts free, out of default lists/BI). Temporary entitlement holds use `MembershipStatus.Frozen`, not member Paused.
-Cancelling a member is refused while any `Active` or `Frozen` membership remains; the admin must resolve those entitlements first (policy/liability). Only then can the member be set to `Cancelled`.
-Admin cancels a membership with reason `MemberRequest` or `AdminDecision` (actor = owner staff id from JWT). After cancel, if the member has no remaining `Active` memberships, member status becomes `Paused`.
+Identity phase promises isolation on tenant managing its own `resources` for creation and deletion, plus a few states on a created identities.
+The membership is the glue that connects a promise from the identity: only valid states (active, paused, lead) on a client can acquire a membership and membership is representation on valid client which the operations expect as a promise, changing a clients state -> changes the membership state therefore the client capalities in the tenant.
+
+## Responsibilities and their semantics on each Layer. 
+
+The member states can be viewed in semantic meaning as states that are `valid` or `invalid` to obtain a memberships.
+But now they are 4 which will be used for statistics.
+
+The client can have 4 states:
+
+1. `Lead` -> semantic meaning same as active and paused in terms of capability to obtain a membership. The state exists statistics.
+2. `Active` -> has at least one membership.
+3. `Paused` -> has no active membership, but used to have.
+4. `Cancelled` -> soft delete, not physical but is not included into operations/statistics. 
+
+Client possible state convertions:
+
+From every state to `Cancelled` but from `Active` the admin should resolve first the `Active` or `Frozen` memberships if any before cancelling.
+From `Lead/Paused` to `Active` and from `Active` to `Paused`, this are automatic conversions from the app, on activating the first or expiring the last membership.
+
+So `Active` or `Paused` or `Lead` member can obtain a membership.
+
+The membership can have 4 states:
+
+Same as members state they are invalid or valid for obtaining a schedule but are used for the statistic later BI.
+
+1. `Active`-> usable entitlement. Starts from assinging,
+2. `Frozen` -> at hold, is just for statistics. The admin changes this state.
+3. `Expired` -> the client successfuly finished the membership. Automatic on the last day/session.
+4. `Cancelled` -> from Active the membership is discarded, the admin should explain why, and that will be in v1 recorded in a DB. Admin manually cancells.
+
+Conversions:
+
+1. `Active` to `Frozen` on hold, but used for now as a statistics, `Expired` the membership when ends via the membership date/sessions  expiration. `Cancelled` admin discards a membership which is still valid.
+2. `Frozen` to `Active`on admin continuation and `Cancelled` when the admin discards a valid membership.
+3. `Expired` to none.
+4. `Cancelled` maybe reversible to `Active` or `Frozen` not to `Expired`. 
+
+
+The states are interface that is exposed to the scheduling and scheduling is operating just on `Active` memberships and does not care about members and their state. Those rules are explictily written in Domain/Policy.
+
 
 ### 1. Make operative member
 
-`Membership` is composition of 2 ideas, what the business offers and what the client chooses. `Membership` is a model combination of the existing `Plan`. The `Plan` is composed of existing `Service` which carries the different catalog of services and a payload that gives a value to specific service with `price and sessions`. The member gives identity to the membership with time and number of disposed sessions.
+`Membership` is composition of 2 ideas, what the business offers and what the client chooses. `Membership` is a model combination of the existing `Plan`. The `Plan` is composed of existing `Service` which carries the different catalog of services and a payload that gives a value to specific service with `price and sessions or duration of days`. The member gives identity to the membership with time and number of disposed sessions.
 
 ### 1.1 Member acquiring membership
 
