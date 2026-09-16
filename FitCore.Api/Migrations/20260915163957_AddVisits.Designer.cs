@@ -3,6 +3,7 @@ using System;
 using FitCore.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FitCore.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260915163957_AddVisits")]
+    partial class AddVisits
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -513,16 +516,6 @@ namespace FitCore.Api.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("VoidNote")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime?>("VoidedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("VoidedByStaffId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CoachStaffId");
@@ -532,8 +525,6 @@ namespace FitCore.Api.Migrations
                     b.HasIndex("MembershipId");
 
                     b.HasIndex("ServiceId");
-
-                    b.HasIndex("VoidedByStaffId");
 
                     b.HasIndex("TenantId", "StartAt")
                         .HasDatabaseName("IX_Visits_TenantId_StartAt");
@@ -546,11 +537,6 @@ namespace FitCore.Api.Migrations
 
                     b.HasIndex("TenantId", "MembershipId", "Status")
                         .HasDatabaseName("IX_Visits_TenantId_MembershipId_Status");
-
-                    b.HasIndex("TenantId", "MembershipId", "CoachStaffId", "StartAt", "EndAt")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Visits_Scheduled_ExactDuplicate")
-                        .HasFilter("\"Status\" = 'Scheduled'");
 
                     b.ToTable("Visits", null, t =>
                         {
@@ -725,11 +711,6 @@ namespace FitCore.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FitCore.Api.Domain.Staffs.Staff", "VoidedByStaff")
-                        .WithMany()
-                        .HasForeignKey("VoidedByStaffId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("CoachStaff");
 
                     b.Navigation("Member");
@@ -739,8 +720,6 @@ namespace FitCore.Api.Migrations
                     b.Navigation("Service");
 
                     b.Navigation("Tenant");
-
-                    b.Navigation("VoidedByStaff");
                 });
 
             modelBuilder.Entity("FitCore.Api.Domain.Members.Member", b =>

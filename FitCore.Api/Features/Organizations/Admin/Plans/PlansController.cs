@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Plans.Create;
+using FitCore.Api.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,17 +9,14 @@ namespace FitCore.Api.Features.Organizations.Admin.Plans;
 [ApiController]
 [Route("api/plans")]
 [Authorize(Roles = "TenantOwner")]
-public class PlansController(PlanService planService) : ControllerBase
+[RequireActiveTenant]
+public class PlansController(PlanService planService, ITenantContext tenantContext) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<PlanResponse>>> List(
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
-        var plans = await planService.ListAsync(tenantId, cancellationToken);
+        var plans = await planService.ListAsync(tenantContext.TenantId, cancellationToken);
         return Ok(plans);
     }
 
@@ -28,11 +25,10 @@ public class PlansController(PlanService planService) : ControllerBase
         [FromBody] CreatePlanRequest request,
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
-        var result = await planService.CreateAsync(tenantId, request, cancellationToken);
+        var result = await planService.CreateAsync(
+            tenantContext.TenantId,
+            request,
+            cancellationToken);
 
         if (!result.Succeeded)
             return ErrorResults.From(result.Error!);
@@ -45,11 +41,10 @@ public class PlansController(PlanService planService) : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
-        var result = await planService.DeactivateAsync(tenantId, id, cancellationToken);
+        var result = await planService.DeactivateAsync(
+            tenantContext.TenantId,
+            id,
+            cancellationToken);
 
         if (!result.Succeeded)
             return ErrorResults.From(result.Error!);

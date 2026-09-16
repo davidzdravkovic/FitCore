@@ -3,6 +3,7 @@ using FitCore.Api.Domain.Memberships;
 using FitCore.Api.Domain.Plans;
 using FitCore.Api.Domain.Services;
 using FitCore.Api.Domain.Staffs;
+using FitCore.Api.Domain.Visits;
 
 namespace FitCore.Api.Domain.Tenants;
 
@@ -26,4 +27,5 @@ public class Tenant
     public ICollection<Service> Services { get; set; } = [];
     public ICollection<MembershipPlan> MembershipPlans { get; set; } = [];
     public ICollection<Membership> Memberships { get; set; } = [];
+    public ICollection<Visit> Visits { get; set; } = [];
 }

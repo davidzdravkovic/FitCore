@@ -1,6 +1,5 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.ServicesStore;
 using FitCore.Api.Domain.Services;
-using FitCore.Api.Domain.Tenants;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Services.Create;
 
@@ -22,14 +21,6 @@ public class GymServiceService(IServiceStore serviceStore)
         CreateServiceRequest request,
         CancellationToken cancellationToken = default)
     {
-        var tenant = await serviceStore.FindTenantByIdAsync(tenantId, cancellationToken);
-
-        if (tenant is null)
-            return Result<ServiceResponse>.Fail(ErrorCodes.OrganizationNotFound);
-
-        if (tenant.Status != TenantStatus.Active)
-            return Result<ServiceResponse>.Fail(ErrorCodes.OrganizationNotActive);
-
 // There is unique index but the DB exceptions are not mapped into errors for that reason V1 has this check
         var name = request.Name.Trim();
         if (await serviceStore.NameTakenAsync(tenantId, name, cancellationToken))

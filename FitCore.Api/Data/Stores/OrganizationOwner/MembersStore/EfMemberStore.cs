@@ -1,6 +1,5 @@
 using FitCore.Api.Domain.Members;
 using FitCore.Api.Domain.Memberships;
-using FitCore.Api.Domain.Tenants;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
@@ -16,15 +15,6 @@ public class EfMemberStore(AppDbContext db) : IMemberStore
             .Where(m => m.TenantId == tenantId && MemberStatusRules.OnRoster.Contains(m.Status))
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
-    }
-
-    public Task<Tenant?> FindTenantByIdAsync(
-        Guid tenantId,
-        CancellationToken cancellationToken = default)
-    {
-        return db.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
     }
 
     public Task<bool> EmailTakenAsync(

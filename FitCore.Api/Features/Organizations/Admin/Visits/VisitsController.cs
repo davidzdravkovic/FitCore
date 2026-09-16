@@ -1,37 +1,40 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FitCore.Api.Errors.Business;
-using FitCore.Api.Features.Organizations.Admin.Memberships.Assign;
-using FitCore.Api.Features.Organizations.Admin.Memberships.Cancel;
+using FitCore.Api.Features.Organizations.Admin.Visits.Create;
+using FitCore.Api.Features.Organizations.Admin.Visits.Void;
 using FitCore.Api.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FitCore.Api.Features.Organizations.Admin.Memberships;
+namespace FitCore.Api.Features.Organizations.Admin.Visits;
 
 [ApiController]
-[Route("api/memberships")]
+[Route("api/visits")]
 [Authorize(Roles = "TenantOwner")]
 [RequireActiveTenant]
-public class MembershipsController(MembershipService membershipService, ITenantContext tenantContext)
-    : ControllerBase
+public class VisitsController(VisitService visitService, ITenantContext tenantContext) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<MembershipResponse>>> List(
+    public async Task<ActionResult<IReadOnlyList<VisitResponse>>> List(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
         CancellationToken cancellationToken)
     {
-        var memberships = await membershipService.ListAsync(
+        var visits = await visitService.ListAsync(
             tenantContext.TenantId,
+            from,
+            to,
             cancellationToken);
-        return Ok(memberships);
+        return Ok(visits);
     }
 
     [HttpPost]
-    public async Task<ActionResult<MembershipResponse>> Assign(
-        [FromBody] AssignMembershipRequest request,
+    public async Task<ActionResult<VisitResponse>> Create(
+        [FromBody] CreateVisitRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await membershipService.AssignAsync(
+        var result = await visitService.CreateAsync(
             tenantContext.TenantId,
             request,
             cancellationToken);
@@ -42,10 +45,10 @@ public class MembershipsController(MembershipService membershipService, ITenantC
         return Ok(result.Value);
     }
 
-    [HttpPost("{id:guid}/cancel")]
-    public async Task<ActionResult<MembershipResponse>> Cancel(
+    [HttpPost("{id:guid}/void")]
+    public async Task<ActionResult<VisitResponse>> Void(
         Guid id,
-        [FromBody] CancelMembershipRequest request,
+        [FromBody] VoidVisitRequest? request,
         CancellationToken cancellationToken)
     {
         var sub = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
@@ -53,11 +56,11 @@ public class MembershipsController(MembershipService membershipService, ITenantC
         if (!Guid.TryParse(sub, out var staffId))
             return ErrorResults.From(ErrorCodes.MissingTenantContext);
 
-        var result = await membershipService.CancelAsync(
+        var result = await visitService.VoidAsync(
             tenantContext.TenantId,
             id,
             staffId,
-            request,
+            request ?? new VoidVisitRequest(),
             cancellationToken);
 
         if (!result.Succeeded)

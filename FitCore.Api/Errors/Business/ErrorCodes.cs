@@ -33,6 +33,16 @@ public static class ErrorCodes
 
     public const string MembershipNotFound = "membership-not-found";
     public const string MembershipNotCancellable = "membership-not-cancellable";
+    public const string MembershipNotSchedulable = "membership-not-schedulable";
+
+    public const string VisitNotFound = "visit-not-found";
+    public const string VisitNotVoidable = "visit-not-voidable";
+    public const string VisitAlreadyScheduled = "visit-already-scheduled";
+    public const string MemberVisitConflict = "member-visit-conflict";
+    public const string CoachUnavailable = "coach-unavailable";
+    public const string NoSessionCredit = "no-session-credit";
+    public const string InvalidVisitInterval = "invalid-visit-interval";
+    public const string MembershipOutsideWindow = "membership-outside-window";
 
     public const string SignInLinkInvalidOrExpired = "sign-in-link-invalid-or-expired";
 }

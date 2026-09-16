@@ -1,6 +1,5 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.PlansStore;
 using FitCore.Api.Domain.Plans;
-using FitCore.Api.Domain.Tenants;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Plans.Create;
 
@@ -21,14 +20,6 @@ public class PlanService(IPlanStore planStore)
         CreatePlanRequest request,
         CancellationToken cancellationToken = default)
     {
-        var tenant = await planStore.FindTenantByIdAsync(tenantId, cancellationToken);
-
-        if (tenant is null)
-            return Result<PlanResponse>.Fail(ErrorCodes.OrganizationNotFound);
-
-        if (tenant.Status != TenantStatus.Active)
-            return Result<PlanResponse>.Fail(ErrorCodes.OrganizationNotActive);
-
         var service = await planStore.FindActiveServiceAsync(
             tenantId,
             request.ServiceId,

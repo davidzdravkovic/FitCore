@@ -1,5 +1,4 @@
 using FitCore.Api.Domain.Staffs;
-using FitCore.Api.Domain.Tenants;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.StaffStore;
@@ -19,15 +18,6 @@ public class EfStaffStore(AppDbContext db) : IStaffStore
             .OrderBy(s => s.LastName)
             .ThenBy(s => s.FirstName)
             .ToListAsync(cancellationToken);
-    }
-
-    public Task<Tenant?> FindTenantByIdAsync(
-        Guid tenantId,
-        CancellationToken cancellationToken = default)
-    {
-        return db.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
     }
 
     public Task<bool> EmailTakenAsync(

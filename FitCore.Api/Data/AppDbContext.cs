@@ -5,6 +5,7 @@ using FitCore.Api.Domain.Platform;
 using FitCore.Api.Domain.Services;
 using FitCore.Api.Domain.Staffs;
 using FitCore.Api.Domain.Tenants;
+using FitCore.Api.Domain.Visits;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data;
@@ -22,6 +23,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Service> Services => Set<Service>();
     public DbSet<MembershipPlan> MembershipPlans => Set<MembershipPlan>();
     public DbSet<Membership> Memberships => Set<Membership>();
+    public DbSet<Visit> Visits => Set<Visit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

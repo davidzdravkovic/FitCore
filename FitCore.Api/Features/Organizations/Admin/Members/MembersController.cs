@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Members.Create;
 using FitCore.Api.Features.Organizations.Admin.Members.Invite;
+using FitCore.Api.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,17 +10,14 @@ namespace FitCore.Api.Features.Organizations.Admin.Members;
 [ApiController]
 [Route("api/members")]
 [Authorize(Roles = "TenantOwner")]
-public class MembersController(MemberService memberService) : ControllerBase
+[RequireActiveTenant]
+public class MembersController(MemberService memberService, ITenantContext tenantContext) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<MemberResponse>>> List(
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
-        var members = await memberService.ListAsync(tenantId, cancellationToken);
+        var members = await memberService.ListAsync(tenantContext.TenantId, cancellationToken);
         return Ok(members);
     }
 
@@ -29,12 +26,8 @@ public class MembersController(MemberService memberService) : ControllerBase
         [FromBody] CreateMemberRequest request,
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
         var result = await memberService.CreateAsync(
-            tenantId,
+            tenantContext.TenantId,
             request,
             cancellationToken);
 
@@ -49,12 +42,8 @@ public class MembersController(MemberService memberService) : ControllerBase
         [FromBody] CreateMemberRequest request,
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
         var result = await memberService.ImportAsync(
-            tenantId,
+            tenantContext.TenantId,
             request,
             cancellationToken);
 
@@ -69,12 +58,8 @@ public class MembersController(MemberService memberService) : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
         var result = await memberService.CancelAsync(
-            tenantId,
+            tenantContext.TenantId,
             id,
             cancellationToken);
 
@@ -89,12 +74,8 @@ public class MembersController(MemberService memberService) : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
         var result = await memberService.InviteAsync(
-            tenantId,
+            tenantContext.TenantId,
             id,
             cancellationToken);
 

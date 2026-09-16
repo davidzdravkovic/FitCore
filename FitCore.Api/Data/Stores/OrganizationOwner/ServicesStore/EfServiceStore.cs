@@ -1,5 +1,4 @@
 using FitCore.Api.Domain.Services;
-using FitCore.Api.Domain.Tenants;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.ServicesStore;
@@ -15,15 +14,6 @@ public class EfServiceStore(AppDbContext db) : IServiceStore
             .Where(s => s.TenantId == tenantId)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(cancellationToken);
-    }
-
-    public Task<Tenant?> FindTenantByIdAsync(
-        Guid tenantId,
-        CancellationToken cancellationToken = default)
-    {
-        return db.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
     }
 
     public Task<bool> NameTakenAsync(

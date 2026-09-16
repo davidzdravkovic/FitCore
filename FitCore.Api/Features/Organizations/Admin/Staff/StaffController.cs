@@ -3,6 +3,7 @@ using System.Security.Claims;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Staff.Create;
 using FitCore.Api.Features.Organizations.Admin.Staff.Invite;
+using FitCore.Api.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,17 +12,14 @@ namespace FitCore.Api.Features.Organizations.Admin.Staff;
 [ApiController]
 [Route("api/staff")]
 [Authorize(Roles = "TenantOwner")]
-public class StaffController(StaffService staffService) : ControllerBase
+[RequireActiveTenant]
+public class StaffController(StaffService staffService, ITenantContext tenantContext) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<StaffResponse>>> List(
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
-        var staff = await staffService.ListAsync(tenantId, cancellationToken);
+        var staff = await staffService.ListAsync(tenantContext.TenantId, cancellationToken);
         return Ok(staff);
     }
 
@@ -30,12 +28,8 @@ public class StaffController(StaffService staffService) : ControllerBase
         [FromBody] CreateStaffRequest request,
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
         var result = await staffService.CreateAsync(
-            tenantId,
+            tenantContext.TenantId,
             request,
             cancellationToken);
 
@@ -50,10 +44,6 @@ public class StaffController(StaffService staffService) : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
         Guid? actingStaffId = null;
         var sub = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
             ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -61,7 +51,7 @@ public class StaffController(StaffService staffService) : ControllerBase
             actingStaffId = parsedSub;
 
         var result = await staffService.SoftDeleteAsync(
-            tenantId,
+            tenantContext.TenantId,
             id,
             actingStaffId,
             cancellationToken);
@@ -77,12 +67,8 @@ public class StaffController(StaffService staffService) : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        var tenantIdClaim = User.FindFirstValue("tenant_id");
-        if (!Guid.TryParse(tenantIdClaim, out var tenantId))
-            return ErrorResults.From(ErrorCodes.MissingTenantContext);
-
         var result = await staffService.InviteAsync(
-            tenantId,
+            tenantContext.TenantId,
             id,
             cancellationToken);
 

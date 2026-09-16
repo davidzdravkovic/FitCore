@@ -1,6 +1,5 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
 using FitCore.Api.Domain.Members;
-using FitCore.Api.Domain.Tenants;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Members.Cancel;
 using FitCore.Api.Features.Organizations.Admin.Members.Create;
@@ -53,14 +52,6 @@ public class MemberService(
         MemberStatus status,
         CancellationToken cancellationToken)
     {
-        var tenant = await memberStore.FindTenantByIdAsync(tenantId, cancellationToken);
-
-        if (tenant is null)
-            return Result<MemberResponse>.Fail(ErrorCodes.OrganizationNotFound);
-
-        if (tenant.Status != TenantStatus.Active)
-            return Result<MemberResponse>.Fail(ErrorCodes.OrganizationNotActive);
-
         var email = NormalizeEmail(request.Email);
         var phone = NormalizePhone(request.Phone);
 
@@ -143,9 +134,6 @@ public class MemberService(
 
         if (member is null)
             return Result.Fail(ErrorCodes.MemberNotFound);
-
-        if (member.Tenant.Status != TenantStatus.Active)
-            return Result.Fail(ErrorCodes.OrganizationNotActive);
 
         if (string.IsNullOrWhiteSpace(member.Email))
             return Result.Fail(ErrorCodes.MemberEmailRequired);

@@ -3,6 +3,7 @@ using System;
 using FitCore.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FitCore.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260915180038_VisitVoidAudit")]
+    partial class VisitVoidAudit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -546,11 +549,6 @@ namespace FitCore.Api.Migrations
 
                     b.HasIndex("TenantId", "MembershipId", "Status")
                         .HasDatabaseName("IX_Visits_TenantId_MembershipId_Status");
-
-                    b.HasIndex("TenantId", "MembershipId", "CoachStaffId", "StartAt", "EndAt")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Visits_Scheduled_ExactDuplicate")
-                        .HasFilter("\"Status\" = 'Scheduled'");
 
                     b.ToTable("Visits", null, t =>
                         {

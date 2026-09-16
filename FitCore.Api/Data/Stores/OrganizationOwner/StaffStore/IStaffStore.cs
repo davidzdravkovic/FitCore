@@ -1,15 +1,10 @@
 using FitCore.Api.Domain.Staffs;
-using FitCore.Api.Domain.Tenants;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.StaffStore;
 
 public interface IStaffStore
 {
     Task<IReadOnlyList<Staff>> ListByTenantAsync(
-        Guid tenantId,
-        CancellationToken cancellationToken = default);
-
-    Task<Tenant?> FindTenantByIdAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default);
 

@@ -1,16 +1,11 @@
 using FitCore.Api.Domain.Members;
 using FitCore.Api.Domain.Memberships;
-using FitCore.Api.Domain.Tenants;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
 
 public interface IMemberStore
 {
     Task<IReadOnlyList<Member>> ListByTenantAsync(
-        Guid tenantId,
-        CancellationToken cancellationToken = default);
-
-    Task<Tenant?> FindTenantByIdAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default);
 

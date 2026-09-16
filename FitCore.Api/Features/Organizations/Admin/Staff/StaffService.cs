@@ -1,6 +1,5 @@
 using FitCore.Api.Data.Stores.OrganizationOwner.StaffStore;
 using FitCore.Api.Domain.Staffs;
-using FitCore.Api.Domain.Tenants;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Staff.Create;
 using FitCore.Api.Infrastructure.App;
@@ -33,14 +32,6 @@ public class StaffService(
         CreateStaffRequest request,
         CancellationToken cancellationToken = default)
     {
-        var tenant = await staffStore.FindTenantByIdAsync(tenantId, cancellationToken);
-
-        if (tenant is null)
-            return Result<StaffResponse>.Fail(ErrorCodes.OrganizationNotFound);
-
-        if (tenant.Status != TenantStatus.Active)
-            return Result<StaffResponse>.Fail(ErrorCodes.OrganizationNotActive);
-
         var email = request.Email.Trim().ToLowerInvariant();
 
         if (await staffStore.EmailTakenAsync(tenantId, email, cancellationToken))
@@ -92,9 +83,6 @@ public class StaffService(
 
         if (staff is null)
             return Result.Fail(ErrorCodes.StaffNotFound);
-
-        if (staff.Tenant.Status != TenantStatus.Active)
-            return Result.Fail(ErrorCodes.OrganizationNotActive);
 
         var now = DateTime.UtcNow;
         var rawToken = InviteTokens.GenerateRaw();

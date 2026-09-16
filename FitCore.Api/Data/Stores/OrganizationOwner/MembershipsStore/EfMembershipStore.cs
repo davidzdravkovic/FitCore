@@ -1,7 +1,7 @@
 using FitCore.Api.Domain.Members;
 using FitCore.Api.Domain.Memberships;
 using FitCore.Api.Domain.Plans;
-using FitCore.Api.Domain.Tenants;
+using FitCore.Api.Domain.Visits;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitCore.Api.Data.Stores.OrganizationOwner.MembershipsStore;
@@ -19,15 +19,6 @@ public class EfMembershipStore(AppDbContext db) : IMembershipStore
             .Where(m => m.TenantId == tenantId)
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
-    }
-
-    public Task<Tenant?> FindTenantByIdAsync(
-        Guid tenantId,
-        CancellationToken cancellationToken = default)
-    {
-        return db.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
     }
 
     public Task<Member?> FindActiveMemberAsync(
@@ -66,6 +57,19 @@ public class EfMembershipStore(AppDbContext db) : IMembershipStore
             .FirstOrDefaultAsync(
                 m => m.TenantId == tenantId && m.Id == membershipId,
                 cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Visit>> ListOpenVisitsForMembershipAsync(
+        Guid tenantId,
+        Guid membershipId,
+        CancellationToken cancellationToken = default)
+    {
+        return await db.Visits
+            .Where(v =>
+                v.TenantId == tenantId
+                && v.MembershipId == membershipId
+                && VisitStatusRules.Open.Contains(v.Status))
+            .ToListAsync(cancellationToken);
     }
 
     public Task<int> CountActiveMembershipsForMemberAsync(

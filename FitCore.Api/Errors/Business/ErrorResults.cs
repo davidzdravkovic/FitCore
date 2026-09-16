@@ -16,6 +16,7 @@ public static class ErrorResults
             or ErrorCodes.ServiceNotFound
             or ErrorCodes.PlanNotFound
             or ErrorCodes.MembershipNotFound
+            or ErrorCodes.VisitNotFound
             => new NotFoundObjectResult(Body(error)),
 
         ErrorCodes.MemberEmailTaken
@@ -24,6 +25,9 @@ public static class ErrorResults
             or ErrorCodes.ServiceNameTaken
             or ErrorCodes.PlanNameTaken
             or ErrorCodes.MemberHasUnresolvedMemberships
+            or ErrorCodes.VisitAlreadyScheduled
+            or ErrorCodes.MemberVisitConflict
+            or ErrorCodes.CoachUnavailable
             => new ConflictObjectResult(Body(error, details)),
 
         _ => new BadRequestObjectResult(Body(error, details)),
@@ -69,6 +73,22 @@ public static class ErrorResults
         ErrorCodes.MembershipNotFound => "Membership not found.",
         ErrorCodes.MembershipNotCancellable =>
             "Only active or frozen memberships can be cancelled.",
+        ErrorCodes.MembershipNotSchedulable =>
+            "Only active memberships can be scheduled.",
+        ErrorCodes.VisitNotFound => "Visit not found.",
+        ErrorCodes.VisitNotVoidable =>
+            "Only scheduled visits can be voided as a scheduling mistake.",
+        ErrorCodes.VisitAlreadyScheduled =>
+            "A scheduled visit already exists for this membership, coach, and time.",
+        ErrorCodes.MemberVisitConflict =>
+            "This member already has a scheduled visit that overlaps this time.",
+        ErrorCodes.CoachUnavailable =>
+            "This coach already has a scheduled visit that overlaps this time.",
+        ErrorCodes.NoSessionCredit =>
+            "This membership has no remaining session credits.",
+        ErrorCodes.InvalidVisitInterval => "EndAt must be after StartAt.",
+        ErrorCodes.MembershipOutsideWindow =>
+            "Visit time is outside this membership's access window.",
         ErrorCodes.MissingTenantContext => "Missing tenant context.",
         _ => error,
     };

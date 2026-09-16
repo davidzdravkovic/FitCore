@@ -1,15 +1,16 @@
+using FitCore.Api.Data.Stores.Locking;
 using FitCore.Api.Data.Stores.OrganizationOwner.MembershipsStore;
 using FitCore.Api.Domain.Members;
 using FitCore.Api.Domain.Memberships;
 using FitCore.Api.Domain.Plans;
-using FitCore.Api.Domain.Tenants;
+using FitCore.Api.Domain.Visits;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Memberships.Assign;
 using FitCore.Api.Features.Organizations.Admin.Memberships.Cancel;
 
 namespace FitCore.Api.Features.Organizations.Admin.Memberships;
 
-public class MembershipService(IMembershipStore membershipStore)
+public class MembershipService(IMembershipStore membershipStore, IOrderedRowLocks rowLocks)
 {
     public async Task<IReadOnlyList<MembershipResponse>> ListAsync(
         Guid tenantId,
@@ -24,14 +25,6 @@ public class MembershipService(IMembershipStore membershipStore)
         AssignMembershipRequest request,
         CancellationToken cancellationToken = default)
     {
-        var tenant = await membershipStore.FindTenantByIdAsync(tenantId, cancellationToken);
-
-        if (tenant is null)
-            return Result<MembershipResponse>.Fail(ErrorCodes.OrganizationNotFound);
-
-        if (tenant.Status != TenantStatus.Active)
-            return Result<MembershipResponse>.Fail(ErrorCodes.OrganizationNotActive);
-
         var member = await membershipStore.FindActiveMemberAsync(
             tenantId,
             request.MemberId,
@@ -96,13 +89,9 @@ public class MembershipService(IMembershipStore membershipStore)
         CancelMembershipRequest request,
         CancellationToken cancellationToken = default)
     {
-        var tenant = await membershipStore.FindTenantByIdAsync(tenantId, cancellationToken);
+        await using var locks = await rowLocks.BeginAsync(cancellationToken);
 
-        if (tenant is null)
-            return Result<MembershipResponse>.Fail(ErrorCodes.OrganizationNotFound);
-
-        if (tenant.Status != TenantStatus.Active)
-            return Result<MembershipResponse>.Fail(ErrorCodes.OrganizationNotActive);
+        await locks.LockMembershipAsync(tenantId, membershipId, cancellationToken);
 
         var membership = await membershipStore.FindByIdForCancelAsync(
             tenantId,
@@ -124,6 +113,14 @@ public class MembershipService(IMembershipStore membershipStore)
         membership.CancelledAt = DateTime.UtcNow;
         membership.CancelledByStaffId = cancelledByStaffId;
 
+        var openVisits = await membershipStore.ListOpenVisitsForMembershipAsync(
+            tenantId,
+            membership.Id,
+            cancellationToken);
+
+        foreach (var visit in openVisits)
+            visit.Status = VisitStatus.Cancelled;
+
         var activeLeft = await membershipStore.CountActiveMembershipsForMemberAsync(
             tenantId,
             membership.MemberId,
@@ -137,6 +134,7 @@ public class MembershipService(IMembershipStore membershipStore)
         }
 
         await membershipStore.SaveChangesAsync(cancellationToken);
+        await locks.CommitAsync(cancellationToken);
 
         return Result<MembershipResponse>.Success(ToResponse(membership));
     }
