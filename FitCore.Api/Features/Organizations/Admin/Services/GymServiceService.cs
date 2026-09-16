@@ -54,10 +54,11 @@ public class GymServiceService(IServiceStore serviceStore)
         if (service is null)
             return Result.Fail(ErrorCodes.ServiceNotFound);
 
-        if (!service.IsActive)
-            return Result.Success();
-
         service.IsActive = false;
+        await serviceStore.DeactivateActivePlansForServiceAsync(
+            tenantId,
+            serviceId,
+            cancellationToken);
         await serviceStore.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="FitCore.Api/FitCore.Api.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="FitCore.Api.Tests/FitCore.Api.Tests.csproj" />
+  </Folder>
 </Solution>

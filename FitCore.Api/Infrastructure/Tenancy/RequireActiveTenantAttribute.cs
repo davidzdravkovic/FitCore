@@ -3,10 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FitCore.Api.Infrastructure.Tenancy;
 
-/// <summary>
-/// Opt-in: resolve <c>tenant_id</c> claim, require the organization exists and is Active,
-/// then populate <see cref="ITenantContext"/>.
-/// </summary>
+
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public sealed class RequireActiveTenantAttribute : Attribute, IFilterFactory
 {

@@ -42,6 +42,22 @@ public class EfServiceStore(AppDbContext db) : IServiceStore
             cancellationToken);
     }
 
+    public async Task DeactivateActivePlansForServiceAsync(
+        Guid tenantId,
+        Guid serviceId,
+        CancellationToken cancellationToken = default)
+    {
+        var plans = await db.MembershipPlans
+            .Where(p =>
+                p.TenantId == tenantId
+                && p.ServiceId == serviceId
+                && p.IsActive)
+            .ToListAsync(cancellationToken);
+
+        foreach (var plan in plans)
+            plan.IsActive = false;
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         db.SaveChangesAsync(cancellationToken);
 }

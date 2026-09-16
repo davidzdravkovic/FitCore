@@ -20,5 +20,10 @@ public interface IServiceStore
         Guid serviceId,
         CancellationToken cancellationToken = default);
 
+    Task DeactivateActivePlansForServiceAsync(
+        Guid tenantId,
+        Guid serviceId,
+        CancellationToken cancellationToken = default);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
