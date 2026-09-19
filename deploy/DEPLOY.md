@@ -24,33 +24,30 @@ chmod +x docker-init.sh
 docker compose -f compose.vps.yaml --env-file .env up -d --build
 ```
 
-Migrations run on API startup (`Database__AutoMigrate=true`).
+Set `PLATFORM_ADMIN_EMAIL` / `PLATFORM_ADMIN_PASSWORD` in `.env` (seeded on startup if that email is new). Migrations run on API startup (`Database__AutoMigrate=true`).
 
-## Nginx snippet (host / infra)
+## Nginx + SPA (Infra repo)
 
-```nginx
-server {
-    server_name fitcore.example.com;   # not the Task Manager host
+Edge config is in **Infra** (`nginx/conf.d/fitcore.conf` + `snippets/fitcore-locations.conf`):
 
-    root /var/www/fitcore;             # Flutter web build
-    index index.html;
+- Host: `fit-core-crm.duckdns.org`
+- SPA: `FITCORE_DIST` → `/usr/share/nginx/fitcore` (Flutter `build/web`)
+- API: `/api/` → `http://fitcore-api:8080` (keeps `/api` path)
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+On the VPS, after pulling Infra and setting `FITCORE_DIST` in Infra `.env`:
 
-    # No URI on proxy_pass — keep /api/... (controllers are [Route("api/...")])
-    location /api/ {
-        proxy_pass http://fitcore-api:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
+```bash
+# Issue TLS once (stop nginx so certbot can bind :80)
+sudo docker compose -f ~/Infra/compose.yaml stop nginx
+sudo certbot certonly --standalone -d fit-core-crm.duckdns.org
+sudo docker compose -f ~/Infra/compose.yaml up -d
+
+# Flutter web (sibling clone)
+cd ~/FitCore.Client && flutter build web
+# FITCORE_DIST=/home/ubuntu/FitCore.Client/build/web
 ```
 
-SPA and API share one origin so CORS `PUBLIC_ORIGIN` matches the browser URL. Point `/api/` at FitCore’s container name.
+`PUBLIC_ORIGIN=https://fit-core-crm.duckdns.org` must match the browser URL.
 
 ## Useful commands
 
