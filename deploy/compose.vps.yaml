@@ -1,0 +1,53 @@
+# FitCore on shared VPS infra (same pattern as ChatMe / Hardliq).
+# Requires external Docker networks: edge, database
+# and a postgres service reachable as hostname "postgres" on database.
+#
+# IMPORTANT: service is named fitcore-api (not api) so it does not collide
+# with Hardliq/Task Manager's "api" alias on the shared edge network.
+
+name: fitcore-vps
+
+services:
+  db-init:
+    image: postgres:17-alpine
+    restart: "no"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-fitcore}
+    volumes:
+      - ./docker-init.sh:/docker-init.sh:ro
+    command: ["sh", "/docker-init.sh"]
+    networks: [database]
+
+  fitcore-api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-fitcore};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY}
+      Jwt__Issuer: FitCore
+      Jwt__Audience: FitCore
+      Jwt__ExpiryMinutes: ${JWT_EXPIRY_MINUTES:-60}
+      Allowed_Cors__0: ${PUBLIC_ORIGIN}
+      App__ClientBaseUrl: ${PUBLIC_ORIGIN}
+      Database__AutoMigrate: "true"
+      Email__From: ${EMAIL_FROM:-}
+      Aws__Region: ${AWS_REGION:-eu-central-1}
+      Aws__AccessKeyId: ${AWS_ACCESS_KEY_ID:-}
+      Aws__SecretAccessKey: ${AWS_SECRET_ACCESS_KEY:-}
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    networks: [edge, database]
+
+networks:
+  edge:
+    external: true
+    name: edge
+  database:
+    external: true
+    name: database
