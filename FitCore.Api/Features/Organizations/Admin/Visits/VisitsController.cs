@@ -2,6 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Visits.Create;
+using FitCore.Api.Features.Organizations.Admin.Visits.Record;
+using FitCore.Api.Features.Organizations.Admin.Visits.Reschedule;
+using FitCore.Api.Features.Organizations.Admin.Visits.Resolve;
 using FitCore.Api.Features.Organizations.Admin.Visits.Void;
 using FitCore.Api.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +39,58 @@ public class VisitsController(VisitService visitService, ITenantContext tenantCo
     {
         var result = await visitService.CreateAsync(
             tenantContext.TenantId,
+            request,
+            cancellationToken);
+
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
+
+        return Ok(result.Value);
+    }
+
+    [HttpPost("record")]
+    public async Task<ActionResult<VisitResponse>> Record(
+        [FromBody] RecordVisitRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await visitService.RecordAsync(
+            tenantContext.TenantId,
+            request,
+            cancellationToken);
+
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
+
+        return Ok(result.Value);
+    }
+
+    [HttpPost("{id:guid}/resolve")]
+    public async Task<ActionResult<VisitResponse>> Resolve(
+        Guid id,
+        [FromBody] ResolveVisitRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await visitService.ResolveScheduledAsync(
+            tenantContext.TenantId,
+            id,
+            request,
+            cancellationToken);
+
+        if (!result.Succeeded)
+            return ErrorResults.From(result.Error!);
+
+        return Ok(result.Value);
+    }
+
+    [HttpPost("{id:guid}/reschedule")]
+    public async Task<ActionResult<VisitResponse>> Reschedule(
+        Guid id,
+        [FromBody] RescheduleVisitRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await visitService.RescheduleAsync(
+            tenantContext.TenantId,
+            id,
             request,
             cancellationToken);
 

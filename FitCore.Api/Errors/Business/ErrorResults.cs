@@ -78,6 +78,12 @@ public static class ErrorResults
         ErrorCodes.VisitNotFound => "Visit not found.",
         ErrorCodes.VisitNotVoidable =>
             "Only scheduled visits can be voided as a scheduling mistake.",
+        ErrorCodes.VisitNotResolvable =>
+            "Only scheduled visits can be resolved.",
+        ErrorCodes.VisitResolveBeforeStart =>
+            "A visit cannot be resolved before its scheduled start time.",
+        ErrorCodes.VisitNotReschedulable =>
+            "Only scheduled visits can be rescheduled.",
         ErrorCodes.VisitAlreadyScheduled =>
             "A scheduled visit already exists for this membership, coach, and time.",
         ErrorCodes.MemberVisitConflict =>
@@ -87,6 +93,10 @@ public static class ErrorResults
         ErrorCodes.NoSessionCredit =>
             "This membership has no remaining session credits.",
         ErrorCodes.InvalidVisitInterval => "EndAt must be after StartAt.",
+        ErrorCodes.VisitStartInPast =>
+            "A visit cannot be scheduled to start before the current time.",
+        ErrorCodes.VisitRecordRequiresPastStart =>
+            "A recorded visit must start before the current time. Use schedule for future visits.",
         ErrorCodes.MembershipOutsideWindow =>
             "Visit time is outside this membership's access window.",
         ErrorCodes.MissingTenantContext => "Missing tenant context.",

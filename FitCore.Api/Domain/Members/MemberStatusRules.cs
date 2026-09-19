@@ -15,6 +15,12 @@ public static class MemberStatusRules
         MemberStatus.Paused,
     ];
 
+    public static readonly MemberStatus[] Cancellable =
+    [
+        MemberStatus.Paused,
+        MemberStatus.Lead,
+    ];
+
     public static readonly MemberStatus[] OnRoster =
     [
         MemberStatus.Lead,

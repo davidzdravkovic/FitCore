@@ -8,8 +8,7 @@ public record CreatePlanRequest(
     [Required, MinLength(1), MaxLength(200)] string Name,
     [Range(0, double.MaxValue)] decimal Price,
     [Required] string EntitlementType,
-    int? SessionCount = null,
-    int? DurationDays = null) : IValidatableObject
+    [Required] int SessionCount) : IValidatableObject
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -17,45 +16,19 @@ public record CreatePlanRequest(
             || !Enum.TryParse<PlanEntitlementType>(
                 EntitlementType.Trim(),
                 ignoreCase: true,
-                out var type))
+                out var type)
+            || type != PlanEntitlementType.SessionPack)
         {
             yield return new ValidationResult(
-                "EntitlementType must be SessionPack or TimePeriod.",
+                "EntitlementType must be SessionPack.",
                 [nameof(EntitlementType)]);
-            yield break;
         }
 
-        if (type == PlanEntitlementType.SessionPack)
+        if (SessionCount <= 0)
         {
-            if (SessionCount is null or <= 0)
-            {
-                yield return new ValidationResult(
-                    "SessionCount must be greater than 0 for SessionPack.",
-                    [nameof(SessionCount)]);
-            }
-
-            if (DurationDays is not null)
-            {
-                yield return new ValidationResult(
-                    "DurationDays must be empty for SessionPack.",
-                    [nameof(DurationDays)]);
-            }
-        }
-        else
-        {
-            if (DurationDays is null or <= 0)
-            {
-                yield return new ValidationResult(
-                    "DurationDays must be greater than 0 for TimePeriod.",
-                    [nameof(DurationDays)]);
-            }
-
-            if (SessionCount is not null)
-            {
-                yield return new ValidationResult(
-                    "SessionCount must be empty for TimePeriod.",
-                    [nameof(SessionCount)]);
-            }
+            yield return new ValidationResult(
+                "SessionCount must be greater than 0.",
+                [nameof(SessionCount)]);
         }
     }
 }

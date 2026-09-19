@@ -5,8 +5,11 @@ public enum VisitStatus
     /// <summary>Upcoming visit; session-pack credit is reserved.</summary>
     Scheduled,
 
-    /// <summary>Check-in / delivered; credit stays consumed.</summary>
+    /// <summary>Delivered; credit stays consumed.</summary>
     Completed,
+
+    /// <summary>Client did not attend; credit stays consumed (distinct from Cancelled for BI).</summary>
+    NoShow,
 
     /// <summary>Early release / reschedule path; credit restored.</summary>
     Postponed,

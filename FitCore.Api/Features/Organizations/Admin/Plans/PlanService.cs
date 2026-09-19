@@ -32,10 +32,6 @@ public class PlanService(IPlanStore planStore)
         if (await planStore.NameTakenAsync(tenantId, name, cancellationToken))
             return Result<PlanResponse>.Fail(ErrorCodes.PlanNameTaken);
 
-        var entitlement = Enum.Parse<PlanEntitlementType>(
-            request.EntitlementType.Trim(),
-            ignoreCase: true);
-
         var plan = new MembershipPlan
         {
             Id = Guid.NewGuid(),
@@ -43,13 +39,8 @@ public class PlanService(IPlanStore planStore)
             ServiceId = service.Id,
             Name = name,
             Price = request.Price,
-            EntitlementType = entitlement,
-            SessionCount = entitlement == PlanEntitlementType.SessionPack
-                ? request.SessionCount
-                : null,
-            DurationDays = entitlement == PlanEntitlementType.TimePeriod
-                ? request.DurationDays
-                : null,
+            EntitlementType = PlanEntitlementType.SessionPack,
+            SessionCount = request.SessionCount,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
         };
@@ -87,7 +78,6 @@ public class PlanService(IPlanStore planStore)
             plan.Price,
             plan.EntitlementType.ToString(),
             plan.SessionCount,
-            plan.DurationDays,
             plan.IsActive,
             plan.CreatedAt);
 }

@@ -11,6 +11,23 @@ public class VisitStatusRulesTests
     }
 
     [Fact]
+    public void OccupiesSlot_includes_scheduled_and_burn_outcomes()
+    {
+        Assert.Equal(
+            [VisitStatus.Scheduled, VisitStatus.Completed, VisitStatus.NoShow],
+            VisitStatusRules.OccupiesSlot);
+    }
+
+    [Theory]
+    [InlineData(VisitStatus.Cancelled)]
+    [InlineData(VisitStatus.Voided)]
+    [InlineData(VisitStatus.Postponed)]
+    public void OccupiesSlot_excludes_non_occupying_outcomes(VisitStatus status)
+    {
+        Assert.DoesNotContain(status, VisitStatusRules.OccupiesSlot);
+    }
+
+    [Fact]
     public void Voidable_contains_only_Scheduled()
     {
         Assert.Equal([VisitStatus.Scheduled], VisitStatusRules.Voidable);
@@ -18,10 +35,17 @@ public class VisitStatusRulesTests
 
     [Theory]
     [InlineData(VisitStatus.Completed)]
+    [InlineData(VisitStatus.NoShow)]
     [InlineData(VisitStatus.Cancelled)]
     public void CreditConsumed_includes_burn_outcomes(VisitStatus status)
     {
         Assert.Contains(status, VisitStatusRules.CreditConsumed);
+    }
+
+    [Fact]
+    public void Resolvable_contains_only_Scheduled()
+    {
+        Assert.Equal([VisitStatus.Scheduled], VisitStatusRules.Resolvable);
     }
 
     [Theory]

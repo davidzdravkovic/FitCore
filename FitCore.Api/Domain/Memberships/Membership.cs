@@ -21,9 +21,17 @@ public class Membership
     public MembershipStatus Status { get; set; }
 
     public DateTime StartAt { get; set; }
-    public DateTime? EndAt { get; set; }
 
-    public int? SessionsRemaining { get; set; }
+    /// <summary>Frozen plan session grant at assign. Immutable.</summary>
+    public int SessionTotal { get; set; }
+
+    /// <summary>Credits held by open scheduled visits.</summary>
+    public int SessionsReserved { get; set; }
+
+    /// <summary>Credits resolved (check-in, forfeit cancel, etc.).</summary>
+    public int SessionsBurned { get; set; }
+
+    public int SessionsAvailable => SessionTotal - SessionsReserved - SessionsBurned;
 
     public DateTime CreatedAt { get; set; }
 

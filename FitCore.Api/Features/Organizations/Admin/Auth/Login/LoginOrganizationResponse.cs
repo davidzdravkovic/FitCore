@@ -4,4 +4,5 @@ public record LoginOrganizationResponse(
     string Message,
     string AccessToken,
     string OrganizationName,
-    string OwnerFirstName);
+    string OwnerFirstName,
+    string TimeZone);

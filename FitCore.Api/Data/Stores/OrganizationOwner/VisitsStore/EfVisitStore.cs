@@ -7,7 +7,7 @@ namespace FitCore.Api.Data.Stores.OrganizationOwner.VisitsStore;
 
 public class EfVisitStore(AppDbContext db) : IVisitStore
 {
-    public async Task<Guid?> FindMembershipIdForVisitAsync(
+    public async Task<VisitLockKeys?> FindLockKeysForVisitAsync(
         Guid tenantId,
         Guid visitId,
         CancellationToken cancellationToken = default)
@@ -15,7 +15,7 @@ public class EfVisitStore(AppDbContext db) : IVisitStore
         return await db.Visits
             .AsNoTracking()
             .Where(v => v.TenantId == tenantId && v.Id == visitId)
-            .Select(v => (Guid?)v.MembershipId)
+            .Select(v => new VisitLockKeys(v.MembershipId, v.MemberId))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -48,6 +48,20 @@ public class EfVisitStore(AppDbContext db) : IVisitStore
                 cancellationToken);
     }
 
+    public Task<int> CountActiveMembershipsForMemberAsync(
+        Guid tenantId,
+        Guid memberId,
+        Guid excludeMembershipId,
+        CancellationToken cancellationToken = default)
+    {
+        return db.Memberships.CountAsync(
+            m => m.TenantId == tenantId
+                && m.MemberId == memberId
+                && m.Id != excludeMembershipId
+                && m.Status == MembershipStatus.Active,
+            cancellationToken);
+    }
+
     public Task<Staff?> FindActiveCoachAsync(
         Guid tenantId,
         Guid coachStaffId,
@@ -66,15 +80,17 @@ public class EfVisitStore(AppDbContext db) : IVisitStore
         Guid coachStaffId,
         DateTime startAt,
         DateTime endAt,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? excludeVisitId = null)
     {
-        return db.Visits.AnyAsync(
-            v => v.TenantId == tenantId
-                && v.CoachStaffId == coachStaffId
-                && VisitStatusRules.Open.Contains(v.Status)
-                && v.StartAt < endAt
-                && v.EndAt > startAt,
-            cancellationToken);
+        return HasCoachOverlapAsync(
+            tenantId,
+            coachStaffId,
+            startAt,
+            endAt,
+            VisitStatusRules.Open,
+            cancellationToken,
+            excludeVisitId);
     }
 
     public Task<bool> HasOpenMemberOverlapAsync(
@@ -82,12 +98,88 @@ public class EfVisitStore(AppDbContext db) : IVisitStore
         Guid memberId,
         DateTime startAt,
         DateTime endAt,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? excludeVisitId = null)
+    {
+        return HasMemberOverlapAsync(
+            tenantId,
+            memberId,
+            startAt,
+            endAt,
+            VisitStatusRules.Open,
+            cancellationToken,
+            excludeVisitId);
+    }
+
+    public Task<bool> HasOccupyingCoachOverlapAsync(
+        Guid tenantId,
+        Guid coachStaffId,
+        DateTime startAt,
+        DateTime endAt,
+        CancellationToken cancellationToken = default,
+        Guid? excludeVisitId = null)
+    {
+        return HasCoachOverlapAsync(
+            tenantId,
+            coachStaffId,
+            startAt,
+            endAt,
+            VisitStatusRules.OccupiesSlot,
+            cancellationToken,
+            excludeVisitId);
+    }
+
+    public Task<bool> HasOccupyingMemberOverlapAsync(
+        Guid tenantId,
+        Guid memberId,
+        DateTime startAt,
+        DateTime endAt,
+        CancellationToken cancellationToken = default,
+        Guid? excludeVisitId = null)
+    {
+        return HasMemberOverlapAsync(
+            tenantId,
+            memberId,
+            startAt,
+            endAt,
+            VisitStatusRules.OccupiesSlot,
+            cancellationToken,
+            excludeVisitId);
+    }
+
+    private Task<bool> HasCoachOverlapAsync(
+        Guid tenantId,
+        Guid coachStaffId,
+        DateTime startAt,
+        DateTime endAt,
+        VisitStatus[] blocking,
+        CancellationToken cancellationToken,
+        Guid? excludeVisitId)
+    {
+        return db.Visits.AnyAsync(
+            v => v.TenantId == tenantId
+                && v.CoachStaffId == coachStaffId
+                && blocking.Contains(v.Status)
+                && (excludeVisitId == null || v.Id != excludeVisitId)
+                && v.StartAt < endAt
+                && v.EndAt > startAt,
+            cancellationToken);
+    }
+
+    private Task<bool> HasMemberOverlapAsync(
+        Guid tenantId,
+        Guid memberId,
+        DateTime startAt,
+        DateTime endAt,
+        VisitStatus[] blocking,
+        CancellationToken cancellationToken,
+        Guid? excludeVisitId)
     {
         return db.Visits.AnyAsync(
             v => v.TenantId == tenantId
                 && v.MemberId == memberId
-                && VisitStatusRules.Open.Contains(v.Status)
+                && blocking.Contains(v.Status)
+                && (excludeVisitId == null || v.Id != excludeVisitId)
                 && v.StartAt < endAt
                 && v.EndAt > startAt,
             cancellationToken);

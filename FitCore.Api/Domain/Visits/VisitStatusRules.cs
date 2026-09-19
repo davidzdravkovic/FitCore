@@ -8,8 +8,31 @@ public static class VisitStatusRules
         VisitStatus.Scheduled,
     ];
 
+    /// <summary>
+    /// Statuses that block the same member/coach time window — including backfilled
+    /// Completed/NoShow so Record cannot stack two outcomes on one slot.
+    /// </summary>
+    public static readonly VisitStatus[] OccupiesSlot =
+    [
+        VisitStatus.Scheduled,
+        VisitStatus.Completed,
+        VisitStatus.NoShow,
+    ];
+
     /// <summary>Only scheduled visits can be voided as admin mistakes.</summary>
     public static readonly VisitStatus[] Voidable =
+    [
+        VisitStatus.Scheduled,
+    ];
+
+    /// <summary>Scheduled visits that can be resolved to Completed or NoShow.</summary>
+    public static readonly VisitStatus[] Resolvable =
+    [
+        VisitStatus.Scheduled,
+    ];
+
+    /// <summary>Only scheduled visits can be moved to a new time.</summary>
+    public static readonly VisitStatus[] Reschedulable =
     [
         VisitStatus.Scheduled,
     ];
@@ -18,6 +41,7 @@ public static class VisitStatusRules
     public static readonly VisitStatus[] CreditConsumed =
     [
         VisitStatus.Completed,
+        VisitStatus.NoShow,
         VisitStatus.Cancelled,
     ];
 

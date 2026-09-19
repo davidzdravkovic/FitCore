@@ -14,7 +14,7 @@ Deadlock prevention for FitCore.Api: every use case that takes multiple row lock
 | Rank | Resource | Typical reason |
 |------|----------|----------------|
 | 1 | `Memberships` | Pack credit / entitlement status |
-| 2 | `Members` | Member calendar overlap |
+| 2 | `Members` | Member calendar overlap / Active↔Paused |
 | 3 | `Staff` (coach) | Coach calendar overlap |
 | 4 | `Visits` | Single-visit transitions (void, etc.) |
 
@@ -22,7 +22,7 @@ Deadlock prevention for FitCore.Api: every use case that takes multiple row lock
 
 1. Acquire locks only via `IOrderedRowLocks` / `IOrderedRowLockScope` (store locking helper).
 2. Call lock methods in increasing rank only (e.g. Membership → Coach is OK; Coach → Membership throws).
-3. A use case may take a **subset** (e.g. cancel membership: Membership only).
+3. A use case may take a **subset** (e.g. assign membership: Member only).
 4. Do not add ad-hoc `FOR UPDATE` outside the helper.
 5. Same order applies to any future writer (check-in, complete, postpone).
 
@@ -31,8 +31,13 @@ Deadlock prevention for FitCore.Api: every use case that takes multiple row lock
 | Use case | Locks |
 |----------|--------|
 | Create visit | Membership → Member → Coach |
-| Cancel membership | Membership |
-| Void visit | Membership → Visit (membership id peeked without lock first) |
+| Record past visit (Completed / NoShow) | Membership → Member → Coach |
+| Assign membership | Member |
+| Cancel membership | Membership → Member |
+| Cancel member | Member |
+| Void visit | Membership → Member → Visit (membership + member ids peeked without lock first) |
+| Resolve visit (Completed / NoShow) | Membership → Member → Visit (same peek; may expire membership + pause member) |
+| Reschedule visit | Membership → Member → Coach (target) → Visit (times and/or coach; status stays Scheduled) |
 
 ## Why
 

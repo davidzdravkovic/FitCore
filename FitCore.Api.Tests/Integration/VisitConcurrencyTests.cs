@@ -57,7 +57,7 @@ public class VisitConcurrencyTests(PostgresFixture fixture)
 
         await using var assert = fixture.CreateScope();
         var assertDb = assert.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.Equal(2, await SeedData.GetSessionsRemainingAsync(assertDb, seed.MembershipId));
+        Assert.Equal(2, await SeedData.GetSessionsAvailableAsync(assertDb, seed.MembershipId));
         Assert.Equal(
             1,
             await assertDb.Visits.CountAsync(v =>
@@ -85,7 +85,7 @@ public class VisitConcurrencyTests(PostgresFixture fixture)
                     existingStart.AddHours(1)));
             Assert.True(existing.Succeeded, existing.Error);
             existingVisitId = existing.Value!.Id;
-            Assert.Equal(2, await SeedData.GetSessionsRemainingAsync(db, seed.MembershipId));
+            Assert.Equal(2, await SeedData.GetSessionsAvailableAsync(db, seed.MembershipId));
         }
 
         var newStart = DateTime.UtcNow.Date.AddDays(11).AddHours(14);
@@ -110,7 +110,7 @@ public class VisitConcurrencyTests(PostgresFixture fixture)
 
         await using var assert = fixture.CreateScope();
         var assertDb = assert.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.Equal(2, await SeedData.GetSessionsRemainingAsync(assertDb, seed.MembershipId));
+        Assert.Equal(2, await SeedData.GetSessionsAvailableAsync(assertDb, seed.MembershipId));
     }
 
     [Fact]

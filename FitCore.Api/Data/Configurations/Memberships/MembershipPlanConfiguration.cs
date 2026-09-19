@@ -10,7 +10,7 @@ public sealed class MembershipPlanConfiguration : IEntityTypeConfiguration<Membe
     {
         entity.ToTable("MembershipPlans", t => t.HasCheckConstraint(
             "CK_MembershipPlans_Entitlement",
-            "(\"EntitlementType\" = 'SessionPack' AND \"SessionCount\" IS NOT NULL AND \"SessionCount\" > 0) OR (\"EntitlementType\" = 'TimePeriod' AND \"DurationDays\" IS NOT NULL AND \"DurationDays\" > 0)"));
+            "\"EntitlementType\" = 'SessionPack' AND \"SessionCount\" IS NOT NULL AND \"SessionCount\" > 0"));
 
         entity.Property(p => p.EntitlementType).HasConversion<string>();
         entity.Property(p => p.Price).HasPrecision(18, 2);

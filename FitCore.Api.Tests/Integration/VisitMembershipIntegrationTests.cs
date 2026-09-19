@@ -32,7 +32,7 @@ public class VisitMembershipIntegrationTests(PostgresFixture fixture)
 
         Assert.True(result.Succeeded, result.Error);
         Assert.Equal(VisitStatus.Scheduled.ToString(), result.Value!.Status);
-        Assert.Equal(2, await SeedData.GetSessionsRemainingAsync(db, seed.MembershipId));
+        Assert.Equal(2, await SeedData.GetSessionsAvailableAsync(db, seed.MembershipId));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class VisitMembershipIntegrationTests(PostgresFixture fixture)
         Assert.True(voided.Succeeded, voided.Error);
         Assert.Equal(VisitStatus.Voided.ToString(), voided.Value!.Status);
         Assert.False(voided.Value.ConsumedSessionCredit);
-        Assert.Equal(2, await SeedData.GetSessionsRemainingAsync(db, seed.MembershipId));
+        Assert.Equal(2, await SeedData.GetSessionsAvailableAsync(db, seed.MembershipId));
 
         var again = await visits.VoidAsync(
             seed.TenantId,
@@ -65,7 +65,7 @@ public class VisitMembershipIntegrationTests(PostgresFixture fixture)
             seed.AdminStaffId,
             new VoidVisitRequest());
         Assert.True(again.Succeeded, again.Error);
-        Assert.Equal(2, await SeedData.GetSessionsRemainingAsync(db, seed.MembershipId));
+        Assert.Equal(2, await SeedData.GetSessionsAvailableAsync(db, seed.MembershipId));
     }
 
     [Fact]

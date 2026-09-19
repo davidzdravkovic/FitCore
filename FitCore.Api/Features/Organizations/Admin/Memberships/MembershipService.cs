@@ -25,6 +25,9 @@ public class MembershipService(IMembershipStore membershipStore, IOrderedRowLock
         AssignMembershipRequest request,
         CancellationToken cancellationToken = default)
     {
+        await using var locks = await rowLocks.BeginAsync(cancellationToken);
+        await locks.LockMemberAsync(tenantId, request.MemberId, cancellationToken);
+
         var member = await membershipStore.FindActiveMemberAsync(
             tenantId,
             request.MemberId,
@@ -33,8 +36,7 @@ public class MembershipService(IMembershipStore membershipStore, IOrderedRowLock
         if (member is null)
             return Result<MembershipResponse>.Fail(ErrorCodes.MemberNotFound);
 
-        if (MemberStatusRules.PromoteToActiveOnAssign.Contains(member.Status))
-            member.Status = MemberStatus.Active;
+        MemberTransitions.ActivateOnAssign(member);
 
         var plan = await membershipStore.FindActivePlanAsync(
             tenantId,
@@ -44,21 +46,12 @@ public class MembershipService(IMembershipStore membershipStore, IOrderedRowLock
         if (plan is null)
             return Result<MembershipResponse>.Fail(ErrorCodes.PlanNotFound);
 
+        if (plan.SessionCount is null or <= 0)
+            return Result<MembershipResponse>.Fail(ErrorCodes.PlanNotFound);
+
         var startAt = request.StartAt?.ToUniversalTime() ?? DateTime.UtcNow;
         if (startAt.Kind == DateTimeKind.Unspecified)
             startAt = DateTime.SpecifyKind(startAt, DateTimeKind.Utc);
-
-        int? sessionsRemaining = null;
-        DateTime? endAt = null;
-
-        if (plan.EntitlementType == PlanEntitlementType.SessionPack)
-        {
-            sessionsRemaining = plan.SessionCount;
-        }
-        else
-        {
-            endAt = startAt.AddDays(plan.DurationDays!.Value);
-        }
 
         var membership = new Membership
         {
@@ -68,13 +61,15 @@ public class MembershipService(IMembershipStore membershipStore, IOrderedRowLock
             PlanId = plan.Id,
             Status = MembershipStatus.Active,
             StartAt = startAt,
-            EndAt = endAt,
-            SessionsRemaining = sessionsRemaining,
+            SessionTotal = plan.SessionCount.Value,
+            SessionsReserved = 0,
+            SessionsBurned = 0,
             CreatedAt = DateTime.UtcNow,
         };
 
         await membershipStore.AddAsync(membership);
         await membershipStore.SaveChangesAsync(cancellationToken);
+        await locks.CommitAsync(cancellationToken);
 
         membership.Member = member;
         membership.Plan = plan;
@@ -107,11 +102,12 @@ public class MembershipService(IMembershipStore membershipStore, IOrderedRowLock
         var reason = Enum.Parse<MembershipCancelReason>(request.Reason.Trim(), ignoreCase: true);
         var note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
 
-        membership.Status = MembershipStatus.Cancelled;
-        membership.CancelReason = reason;
-        membership.CancelNote = note;
-        membership.CancelledAt = DateTime.UtcNow;
-        membership.CancelledByStaffId = cancelledByStaffId;
+        MembershipTransitions.Cancel(
+            membership,
+            reason,
+            note,
+            cancelledByStaffId,
+            DateTime.UtcNow);
 
         var openVisits = await membershipStore.ListOpenVisitsForMembershipAsync(
             tenantId,
@@ -119,7 +115,12 @@ public class MembershipService(IMembershipStore membershipStore, IOrderedRowLock
             cancellationToken);
 
         foreach (var visit in openVisits)
-            visit.Status = VisitStatus.Cancelled;
+        {
+            MembershipTransitions.ForfeitReservedOnVisitCancel(membership, visit);
+            VisitTransitions.CancelOpen(visit);
+        }
+
+        await locks.LockMemberAsync(tenantId, membership.MemberId, cancellationToken);
 
         var activeLeft = await membershipStore.CountActiveMembershipsForMemberAsync(
             tenantId,
@@ -127,11 +128,7 @@ public class MembershipService(IMembershipStore membershipStore, IOrderedRowLock
             membership.Id,
             cancellationToken);
 
-        if (activeLeft == 0
-            && membership.Member.Status == MemberStatus.Active)
-        {
-            membership.Member.Status = MemberStatus.Paused;
-        }
+        MemberTransitions.PauseIfNoOtherActive(membership.Member, activeLeft);
 
         await membershipStore.SaveChangesAsync(cancellationToken);
         await locks.CommitAsync(cancellationToken);
@@ -148,8 +145,10 @@ public class MembershipService(IMembershipStore membershipStore, IOrderedRowLock
             membership.Plan.Name,
             membership.Status.ToString(),
             membership.StartAt,
-            membership.EndAt,
-            membership.SessionsRemaining,
+            membership.SessionTotal,
+            membership.SessionsReserved,
+            membership.SessionsBurned,
+            membership.SessionsAvailable,
             membership.CreatedAt,
             membership.CancelReason?.ToString(),
             membership.CancelNote,

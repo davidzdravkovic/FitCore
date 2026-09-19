@@ -6,5 +6,7 @@ public record UnresolvedMembershipResponse(
     string PlanName,
     string Status,
     DateTime StartAt,
-    DateTime? EndAt,
-    int? SessionsRemaining);
+    int SessionTotal,
+    int SessionsReserved,
+    int SessionsBurned,
+    int SessionsAvailable);

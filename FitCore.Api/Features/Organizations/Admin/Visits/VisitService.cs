@@ -1,10 +1,13 @@
 using FitCore.Api.Data.Stores.Locking;
 using FitCore.Api.Data.Stores.OrganizationOwner.VisitsStore;
+using FitCore.Api.Domain.Members;
 using FitCore.Api.Domain.Memberships;
-using FitCore.Api.Domain.Plans;
 using FitCore.Api.Domain.Visits;
 using FitCore.Api.Errors.Business;
 using FitCore.Api.Features.Organizations.Admin.Visits.Create;
+using FitCore.Api.Features.Organizations.Admin.Visits.Record;
+using FitCore.Api.Features.Organizations.Admin.Visits.Reschedule;
+using FitCore.Api.Features.Organizations.Admin.Visits.Resolve;
 using FitCore.Api.Features.Organizations.Admin.Visits.Void;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -49,6 +52,9 @@ public class VisitService(IVisitStore visitStore, IOrderedRowLocks rowLocks)
         if (endAt <= startAt)
             return Result<VisitResponse>.Fail(ErrorCodes.InvalidVisitInterval);
 
+        if (startAt < DateTime.UtcNow)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitStartInPast);
+
         await using var locks = await rowLocks.BeginAsync(cancellationToken);
 
         await locks.LockMembershipAsync(tenantId, request.MembershipId, cancellationToken);
@@ -61,16 +67,13 @@ public class VisitService(IVisitStore visitStore, IOrderedRowLocks rowLocks)
         if (membership is null)
             return Result<VisitResponse>.Fail(ErrorCodes.MembershipNotFound);
 
-// Holding lock on membership protects other code to drift the state of the member, since the domain rule now is -> cancelling a member
-// requires cancelling all active memberships, if this membership is not active the discard will happen anyway, reason none-schedulable
-
         if (!MembershipStatusRules.Schedulable.Contains(membership.Status))
             return Result<VisitResponse>.Fail(ErrorCodes.MembershipNotSchedulable);
 
         await locks.LockMemberAsync(tenantId, membership.MemberId, cancellationToken);
         await locks.LockCoachAsync(tenantId, request.CoachStaffId, cancellationToken);
 
-         var coach = await visitStore.FindActiveCoachAsync(
+        var coach = await visitStore.FindActiveCoachAsync(
             tenantId,
             request.CoachStaffId,
             cancellationToken);
@@ -98,24 +101,10 @@ public class VisitService(IVisitStore visitStore, IOrderedRowLocks rowLocks)
             return Result<VisitResponse>.Fail(ErrorCodes.CoachUnavailable);
         }
 
-        var consumedCredit = false;
+        var reserved = MembershipTransitions.TryReserveEntitlementForSchedule(membership);
 
-        if (membership.Plan.EntitlementType == PlanEntitlementType.SessionPack)
-        {
-            if (membership.SessionsRemaining is null or <= 0)
-                return Result<VisitResponse>.Fail(ErrorCodes.NoSessionCredit);
-
-            membership.SessionsRemaining--;
-            consumedCredit = true;
-        }
-        else
-        {
-            if (startAt < membership.StartAt
-                || (membership.EndAt is not null && startAt > membership.EndAt))
-            {
-                return Result<VisitResponse>.Fail(ErrorCodes.MembershipOutsideWindow);
-            }
-        }
+        if (!reserved.Succeeded)
+            return Result<VisitResponse>.Fail(reserved.Error!);
 
         var visit = new Visit
         {
@@ -128,7 +117,7 @@ public class VisitService(IVisitStore visitStore, IOrderedRowLocks rowLocks)
             StartAt = startAt,
             EndAt = endAt,
             Status = VisitStatus.Scheduled,
-            ConsumedSessionCredit = consumedCredit,
+            ConsumedSessionCredit = true,
             CreatedAt = DateTime.UtcNow,
         };
 
@@ -152,6 +141,117 @@ public class VisitService(IVisitStore visitStore, IOrderedRowLocks rowLocks)
         return Result<VisitResponse>.Success(ToResponse(visit));
     }
 
+    public async Task<Result<VisitResponse>> RecordAsync(
+        Guid tenantId,
+        RecordVisitRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var outcome = request.Outcome switch
+        {
+            VisitResolveOutcome.Completed => VisitStatus.Completed,
+            VisitResolveOutcome.NoShow => VisitStatus.NoShow,
+            _ => (VisitStatus?)null,
+        };
+
+        if (outcome is null)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitNotResolvable);
+
+        var startAt = ToUtc(request.StartAt);
+        var endAt = ToUtc(request.EndAt);
+
+        if (endAt <= startAt)
+            return Result<VisitResponse>.Fail(ErrorCodes.InvalidVisitInterval);
+
+        if (startAt >= DateTime.UtcNow)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitRecordRequiresPastStart);
+
+        await using var locks = await rowLocks.BeginAsync(cancellationToken);
+
+        await locks.LockMembershipAsync(tenantId, request.MembershipId, cancellationToken);
+
+        var membership = await visitStore.FindMembershipForScheduleAsync(
+            tenantId,
+            request.MembershipId,
+            cancellationToken);
+
+        if (membership is null)
+            return Result<VisitResponse>.Fail(ErrorCodes.MembershipNotFound);
+
+        if (!MembershipStatusRules.Schedulable.Contains(membership.Status))
+            return Result<VisitResponse>.Fail(ErrorCodes.MembershipNotSchedulable);
+
+        await locks.LockMemberAsync(tenantId, membership.MemberId, cancellationToken);
+        await locks.LockCoachAsync(tenantId, request.CoachStaffId, cancellationToken);
+
+        var coach = await visitStore.FindActiveCoachAsync(
+            tenantId,
+            request.CoachStaffId,
+            cancellationToken);
+
+        if (coach is null)
+            return Result<VisitResponse>.Fail(ErrorCodes.StaffNotFound);
+
+        if (await visitStore.HasOccupyingMemberOverlapAsync(
+                tenantId,
+                membership.MemberId,
+                startAt,
+                endAt,
+                cancellationToken))
+        {
+            return Result<VisitResponse>.Fail(ErrorCodes.MemberVisitConflict);
+        }
+
+        if (await visitStore.HasOccupyingCoachOverlapAsync(
+                tenantId,
+                coach.Id,
+                startAt,
+                endAt,
+                cancellationToken))
+        {
+            return Result<VisitResponse>.Fail(ErrorCodes.CoachUnavailable);
+        }
+
+        var burned = MembershipTransitions.TryBurnAvailableOnRecord(membership);
+        if (!burned.Succeeded)
+            return Result<VisitResponse>.Fail(burned.Error!);
+
+        if (membership.Status == MembershipStatus.Expired)
+        {
+            var otherActive = await visitStore.CountActiveMembershipsForMemberAsync(
+                tenantId,
+                membership.MemberId,
+                membership.Id,
+                cancellationToken);
+            MemberTransitions.PauseIfNoOtherActive(membership.Member, otherActive);
+        }
+
+        var visit = new Visit
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            MembershipId = membership.Id,
+            MemberId = membership.MemberId,
+            CoachStaffId = coach.Id,
+            ServiceId = membership.Plan.ServiceId,
+            StartAt = startAt,
+            EndAt = endAt,
+            Status = outcome.Value,
+            ConsumedSessionCredit = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        await visitStore.AddAsync(visit);
+        await visitStore.SaveChangesAsync(cancellationToken);
+        await locks.CommitAsync(cancellationToken);
+
+        visit.Membership = membership;
+        visit.Member = membership.Member;
+        visit.CoachStaff = coach;
+        visit.Service = membership.Plan.Service;
+
+        return Result<VisitResponse>.Success(ToResponse(visit));
+    }
+
     public async Task<Result<VisitResponse>> VoidAsync(
         Guid tenantId,
         Guid visitId,
@@ -159,17 +259,18 @@ public class VisitService(IVisitStore visitStore, IOrderedRowLocks rowLocks)
         VoidVisitRequest request,
         CancellationToken cancellationToken = default)
     {
-        var membershipId = await visitStore.FindMembershipIdForVisitAsync(
+        var lockKeys = await visitStore.FindLockKeysForVisitAsync(
             tenantId,
             visitId,
             cancellationToken);
 
-        if (membershipId is null)
+        if (lockKeys is null)
             return Result<VisitResponse>.Fail(ErrorCodes.VisitNotFound);
 
         await using var locks = await rowLocks.BeginAsync(cancellationToken);
 
-        await locks.LockMembershipAsync(tenantId, membershipId.Value, cancellationToken);
+        await locks.LockMembershipAsync(tenantId, lockKeys.MembershipId, cancellationToken);
+        await locks.LockMemberAsync(tenantId, lockKeys.MemberId, cancellationToken);
         await locks.LockVisitAsync(tenantId, visitId, cancellationToken);
 
         var visit = await visitStore.FindByIdForVoidAsync(
@@ -189,19 +290,174 @@ public class VisitService(IVisitStore visitStore, IOrderedRowLocks rowLocks)
         if (!VisitStatusRules.Voidable.Contains(visit.Status))
             return Result<VisitResponse>.Fail(ErrorCodes.VisitNotVoidable);
 
-        if (visit.ConsumedSessionCredit && visit.Membership.SessionsRemaining is not null)
-        {
-            visit.Membership.SessionsRemaining++;
-            visit.ConsumedSessionCredit = false;
-        }
+        if (MembershipTransitions.TryRestorePackCreditOnVoid(visit))
+            MemberTransitions.ActivateIfPaused(visit.Member);
 
-        visit.Status = VisitStatus.Voided;
-        visit.VoidNote = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
-        visit.VoidedAt = DateTime.UtcNow;
-        visit.VoidedByStaffId = voidedByStaffId;
+        var note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+        VisitTransitions.Void(visit, note, voidedByStaffId, DateTime.UtcNow);
 
         await visitStore.SaveChangesAsync(cancellationToken);
         await locks.CommitAsync(cancellationToken);
+
+        return Result<VisitResponse>.Success(ToResponse(visit));
+    }
+
+    public async Task<Result<VisitResponse>> ResolveScheduledAsync(
+        Guid tenantId,
+        Guid visitId,
+        ResolveVisitRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var outcome = request.Outcome switch
+        {
+            VisitResolveOutcome.Completed => VisitStatus.Completed,
+            VisitResolveOutcome.NoShow => VisitStatus.NoShow,
+            _ => (VisitStatus?)null,
+        };
+
+        if (outcome is null)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitNotResolvable);
+
+        var occurredAt = ToUtc(request.OccurredAt);
+
+        var lockKeys = await visitStore.FindLockKeysForVisitAsync(
+            tenantId,
+            visitId,
+            cancellationToken);
+
+        if (lockKeys is null)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitNotFound);
+
+        await using var locks = await rowLocks.BeginAsync(cancellationToken);
+
+        await locks.LockMembershipAsync(tenantId, lockKeys.MembershipId, cancellationToken);
+        await locks.LockMemberAsync(tenantId, lockKeys.MemberId, cancellationToken);
+        await locks.LockVisitAsync(tenantId, visitId, cancellationToken);
+
+        var visit = await visitStore.FindByIdForVoidAsync(
+            tenantId,
+            visitId,
+            cancellationToken);
+
+        if (visit is null)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitNotFound);
+
+        if (visit.Status == outcome)
+        {
+            await locks.CommitAsync(cancellationToken);
+            return Result<VisitResponse>.Success(ToResponse(visit));
+        }
+
+        if (!VisitStatusRules.Resolvable.Contains(visit.Status))
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitNotResolvable);
+
+        if (occurredAt < visit.StartAt)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitResolveBeforeStart);
+
+        MembershipTransitions.BurnReservedOnComplete(visit.Membership, visit);
+
+        if (visit.Membership.Status == MembershipStatus.Expired)
+        {
+            var otherActive = await visitStore.CountActiveMembershipsForMemberAsync(
+                tenantId,
+                visit.MemberId,
+                visit.MembershipId,
+                cancellationToken);
+            MemberTransitions.PauseIfNoOtherActive(visit.Member, otherActive);
+        }
+
+        VisitTransitions.Resolve(visit, outcome.Value);
+
+        await visitStore.SaveChangesAsync(cancellationToken);
+        await locks.CommitAsync(cancellationToken);
+
+        return Result<VisitResponse>.Success(ToResponse(visit));
+    }
+
+    public async Task<Result<VisitResponse>> RescheduleAsync(
+        Guid tenantId,
+        Guid visitId,
+        RescheduleVisitRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var startAt = ToUtc(request.StartAt);
+        var endAt = ToUtc(request.EndAt);
+
+        if (endAt <= startAt)
+            return Result<VisitResponse>.Fail(ErrorCodes.InvalidVisitInterval);
+
+        if (startAt < DateTime.UtcNow)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitStartInPast);
+
+        var lockKeys = await visitStore.FindLockKeysForVisitAsync(
+            tenantId,
+            visitId,
+            cancellationToken);
+
+        if (lockKeys is null)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitNotFound);
+
+        await using var locks = await rowLocks.BeginAsync(cancellationToken);
+
+        await locks.LockMembershipAsync(tenantId, lockKeys.MembershipId, cancellationToken);
+        await locks.LockMemberAsync(tenantId, lockKeys.MemberId, cancellationToken);
+
+        var visit = await visitStore.FindByIdForVoidAsync(
+            tenantId,
+            visitId,
+            cancellationToken);
+
+        if (visit is null)
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitNotFound);
+
+        if (!VisitStatusRules.Reschedulable.Contains(visit.Status))
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitNotReschedulable);
+
+        await locks.LockCoachAsync(tenantId, request.CoachStaffId, cancellationToken);
+        await locks.LockVisitAsync(tenantId, visitId, cancellationToken);
+
+        var coach = await visitStore.FindActiveCoachAsync(
+            tenantId,
+            request.CoachStaffId,
+            cancellationToken);
+
+        if (coach is null)
+            return Result<VisitResponse>.Fail(ErrorCodes.StaffNotFound);
+
+        if (await visitStore.HasOpenMemberOverlapAsync(
+                tenantId,
+                visit.MemberId,
+                startAt,
+                endAt,
+                cancellationToken,
+                excludeVisitId: visit.Id))
+        {
+            return Result<VisitResponse>.Fail(ErrorCodes.MemberVisitConflict);
+        }
+
+        if (await visitStore.HasOpenCoachOverlapAsync(
+                tenantId,
+                coach.Id,
+                startAt,
+                endAt,
+                cancellationToken,
+                excludeVisitId: visit.Id))
+        {
+            return Result<VisitResponse>.Fail(ErrorCodes.CoachUnavailable);
+        }
+
+        VisitTransitions.Reschedule(visit, coach.Id, startAt, endAt);
+        visit.CoachStaff = coach;
+
+        try
+        {
+            await visitStore.SaveChangesAsync(cancellationToken);
+            await locks.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            return Result<VisitResponse>.Fail(ErrorCodes.VisitAlreadyScheduled);
+        }
 
         return Result<VisitResponse>.Success(ToResponse(visit));
     }

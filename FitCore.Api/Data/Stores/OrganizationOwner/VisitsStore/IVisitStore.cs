@@ -6,7 +6,7 @@ namespace FitCore.Api.Data.Stores.OrganizationOwner.VisitsStore;
 
 public interface IVisitStore
 {
-    Task<Guid?> FindMembershipIdForVisitAsync(
+    Task<VisitLockKeys?> FindLockKeysForVisitAsync(
         Guid tenantId,
         Guid visitId,
         CancellationToken cancellationToken = default);
@@ -21,6 +21,12 @@ public interface IVisitStore
         Guid membershipId,
         CancellationToken cancellationToken = default);
 
+    Task<int> CountActiveMembershipsForMemberAsync(
+        Guid tenantId,
+        Guid memberId,
+        Guid excludeMembershipId,
+        CancellationToken cancellationToken = default);
+
     Task<Staff?> FindActiveCoachAsync(
         Guid tenantId,
         Guid coachStaffId,
@@ -31,14 +37,32 @@ public interface IVisitStore
         Guid coachStaffId,
         DateTime startAt,
         DateTime endAt,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        Guid? excludeVisitId = null);
 
     Task<bool> HasOpenMemberOverlapAsync(
         Guid tenantId,
         Guid memberId,
         DateTime startAt,
         DateTime endAt,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        Guid? excludeVisitId = null);
+
+    Task<bool> HasOccupyingCoachOverlapAsync(
+        Guid tenantId,
+        Guid coachStaffId,
+        DateTime startAt,
+        DateTime endAt,
+        CancellationToken cancellationToken = default,
+        Guid? excludeVisitId = null);
+
+    Task<bool> HasOccupyingMemberOverlapAsync(
+        Guid tenantId,
+        Guid memberId,
+        DateTime startAt,
+        DateTime endAt,
+        CancellationToken cancellationToken = default,
+        Guid? excludeVisitId = null);
 
     Task<IReadOnlyList<Visit>> ListByTenantAsync(
         Guid tenantId,
@@ -50,3 +74,5 @@ public interface IVisitStore
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
+
+public sealed record VisitLockKeys(Guid MembershipId, Guid MemberId);

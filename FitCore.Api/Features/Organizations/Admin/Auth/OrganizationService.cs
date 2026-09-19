@@ -73,7 +73,8 @@ public class OrganizationService(
                 "Organization created",
                 accessToken,
                 tenant.Name,
-                owner.FirstName));
+                owner.FirstName,
+                tenant.TimeZone));
     }
 
     public async Task<Result<LoginOrganizationResponse>> LoginAsync(
@@ -107,7 +108,8 @@ public class OrganizationService(
                 "Signed in",
                 accessToken,
                 staff.Tenant.Name,
-                staff.FirstName));
+                staff.FirstName,
+                staff.Tenant.TimeZone));
     }
 
     private static string HashToken(string rawToken)

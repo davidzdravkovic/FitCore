@@ -1,3 +1,4 @@
+using FitCore.Api.Data.Stores.Locking;
 using FitCore.Api.Data.Stores.OrganizationOwner.MembersStore;
 using FitCore.Api.Domain.Members;
 using FitCore.Api.Errors.Business;
@@ -6,13 +7,16 @@ using FitCore.Api.Features.Organizations.Admin.Members.Create;
 using FitCore.Api.Infrastructure.App;
 using FitCore.Api.Infrastructure.Auth;
 using FitCore.Api.Infrastructure.Email;
+using Microsoft.Extensions.Logging;
 
 namespace FitCore.Api.Features.Organizations.Admin.Members;
 
 public class MemberService(
     IMemberStore memberStore,
+    IOrderedRowLocks rowLocks,
     IEmailSender emailSender,
-    IClientLinks clientLinks)
+    IClientLinks clientLinks,
+    ILogger<MemberService> logger)
 {
     private static readonly TimeSpan InviteLifetime = TimeSpan.FromDays(7);
 
@@ -90,10 +94,16 @@ public class MemberService(
         Guid memberId,
         CancellationToken cancellationToken = default)
     {
+        await using var locks = await rowLocks.BeginAsync(cancellationToken);
+        await locks.LockMemberAsync(tenantId, memberId, cancellationToken);
+
         var member = await memberStore.FindActiveByIdAsync(tenantId, memberId, cancellationToken);
 
         if (member is null)
             return Result.Fail(ErrorCodes.MemberNotFound);
+
+        if (!MemberStatusRules.Cancellable.Contains(member.Status))
+            return Result.Fail(ErrorCodes.MemberHasUnresolvedMemberships, null);
 
         var unresolved = await memberStore.ListUnresolvedMembershipsForMemberAsync(
             tenantId,
@@ -102,6 +112,13 @@ public class MemberService(
 
         if (unresolved.Count > 0)
         {
+            logger.LogError(
+                "Member {MemberId} in tenant {TenantId} is {Status} (cancellable) but has {Count} unresolved membership(s)",
+                memberId,
+                tenantId,
+                member.Status,
+                unresolved.Count);
+
             var details = unresolved
                 .Select(m => new UnresolvedMembershipResponse(
                     m.Id,
@@ -109,15 +126,18 @@ public class MemberService(
                     m.Plan.Name,
                     m.Status.ToString(),
                     m.StartAt,
-                    m.EndAt,
-                    m.SessionsRemaining))
+                    m.SessionTotal,
+                    m.SessionsReserved,
+                    m.SessionsBurned,
+                    m.SessionsAvailable))
                 .ToList();
 
             return Result.Fail(ErrorCodes.MemberHasUnresolvedMemberships, details);
         }
 
-        member.Status = MemberStatus.Cancelled;
+        MemberTransitions.Cancel(member);
         await memberStore.SaveChangesAsync(cancellationToken);
+        await locks.CommitAsync(cancellationToken);
 
         return Result.Success();
     }

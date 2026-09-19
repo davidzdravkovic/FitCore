@@ -37,11 +37,16 @@ public static class ErrorCodes
 
     public const string VisitNotFound = "visit-not-found";
     public const string VisitNotVoidable = "visit-not-voidable";
+    public const string VisitNotResolvable = "visit-not-resolvable";
+    public const string VisitResolveBeforeStart = "visit-resolve-before-start";
+    public const string VisitNotReschedulable = "visit-not-reschedulable";
     public const string VisitAlreadyScheduled = "visit-already-scheduled";
     public const string MemberVisitConflict = "member-visit-conflict";
     public const string CoachUnavailable = "coach-unavailable";
     public const string NoSessionCredit = "no-session-credit";
     public const string InvalidVisitInterval = "invalid-visit-interval";
+    public const string VisitStartInPast = "visit-start-in-past";
+    public const string VisitRecordRequiresPastStart = "visit-record-requires-past-start";
     public const string MembershipOutsideWindow = "membership-outside-window";
 
     public const string SignInLinkInvalidOrExpired = "sign-in-link-invalid-or-expired";

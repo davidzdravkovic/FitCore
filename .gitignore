@@ -13,3 +13,6 @@ appsettings.Development.json
 # Agent / Cursor local rails (not committed)
 AGENTS.md
 .cursor/
+
+# Agent alternate build outputs (dotnet -o .build-*)
+.build*/

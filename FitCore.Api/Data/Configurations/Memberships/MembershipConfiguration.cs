@@ -8,7 +8,14 @@ public sealed class MembershipConfiguration : IEntityTypeConfiguration<Membershi
 {
     public void Configure(EntityTypeBuilder<Membership> entity)
     {
-        entity.ToTable("Memberships");
+        entity.ToTable("Memberships", t =>
+        {
+            t.HasCheckConstraint(
+                "CK_Memberships_SessionBuckets",
+                "\"SessionTotal\" >= 0 AND \"SessionsReserved\" >= 0 AND \"SessionsBurned\" >= 0 AND \"SessionTotal\" >= (\"SessionsReserved\" + \"SessionsBurned\")");
+        });
+
+        entity.Ignore(m => m.SessionsAvailable);
 
         entity.Property(m => m.Status).HasConversion<string>();
         entity.Property(m => m.CancelReason).HasConversion<string>();

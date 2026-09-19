@@ -54,6 +54,13 @@ public static class RegisterServices
                 .RequireAuthenticatedUser()
                 .Build();
             options.Filters.Add(new AuthorizeFilter(policy));
+        })
+        .AddJsonOptions(options =>
+        {
+            // Enums on the wire as names ("Completed") so clients are not tied to
+            // declaration order. Integers remain accepted for older callers.
+            options.JsonSerializerOptions.Converters.Add(
+                new System.Text.Json.Serialization.JsonStringEnumConverter());
         });
         services.AddFitCoreAuthentication();
         services.AddAuthorization();

@@ -7,6 +7,5 @@ public record PlanResponse(
     decimal Price,
     string EntitlementType,
     int? SessionCount,
-    int? DurationDays,
     bool IsActive,
     DateTime CreatedAt);

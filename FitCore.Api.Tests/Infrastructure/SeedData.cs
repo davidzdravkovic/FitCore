@@ -114,7 +114,9 @@ public static class SeedData
             PlanId = planId,
             Status = MembershipStatus.Active,
             StartAt = now.AddDays(-1),
-            SessionsRemaining = sessionsRemaining,
+            SessionTotal = planSessionCount,
+            SessionsReserved = 0,
+            SessionsBurned = Math.Max(0, planSessionCount - sessionsRemaining),
             CreatedAt = now,
         });
 
@@ -132,15 +134,17 @@ public static class SeedData
         };
     }
 
-    public static async Task<int?> GetSessionsRemainingAsync(
+    public static async Task<int> GetSessionsAvailableAsync(
         AppDbContext db,
         Guid membershipId,
         CancellationToken cancellationToken = default)
     {
-        return await db.Memberships
+        var row = await db.Memberships
             .AsNoTracking()
             .Where(m => m.Id == membershipId)
-            .Select(m => m.SessionsRemaining)
+            .Select(m => new { m.SessionTotal, m.SessionsReserved, m.SessionsBurned })
             .SingleAsync(cancellationToken);
+
+        return row.SessionTotal - row.SessionsReserved - row.SessionsBurned;
     }
 }

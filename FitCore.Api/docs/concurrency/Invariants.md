@@ -15,7 +15,7 @@ Case `plan creation wins`: plan creation succed, but the service catches active 
 
 ### Tradeoff
 
-Currently we can affort this incosistency to happen, one admin UI or later maybe fews can end up in this extreme rare window.
+Currently we can affort this incosistence to happen, one admin UI or later maybe fews can end up in this extreme rare window.
 No need for extra depth optimizations.
 
 
@@ -36,7 +36,7 @@ Assigning a membership checks on member for those "valid" states even they are m
 The `paused` and `cancellation` paths are different:
 
 1. `Paused` state transition happens after there is no `active membership`. Visits operations that are draining sessions -> `check in` or just on `scheduled` will check for active memberships if this is the last session drained and therefore as consequence if there is no active membership for that member will turn the member into `paused` state.
-The inconsistency for this can happen if this `paused` actions read no active memberships, and after the saved membership with active member in the DB the the update for paused overwrites the active member. We can end up with row one from the table.
+The inconsistency for this can happen if this `paused` actions read no active memberships, and after the saved membership with active member in the DB then the update for paused overwrites the active member. We can end up with row one from the table.
 
 2. `Cancellation` state transition happens on explicit cancellation by the admin. And mirrors the same race mechanism as `paused`.
 
