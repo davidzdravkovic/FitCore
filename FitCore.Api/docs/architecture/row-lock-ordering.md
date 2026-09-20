@@ -24,7 +24,7 @@ Deadlock prevention for FitCore.Api: every use case that takes multiple row lock
 2. Call lock methods in increasing rank only (e.g. Membership → Coach is OK; Coach → Membership throws).
 3. A use case may take a **subset** (e.g. assign membership: Member only).
 4. Do not add ad-hoc `FOR UPDATE` outside the helper.
-5. Same order applies to any future writer (check-in, complete, postpone).
+5. Same order applies to any future writer (resolve, void, postpone).
 
 ## Current use cases
 

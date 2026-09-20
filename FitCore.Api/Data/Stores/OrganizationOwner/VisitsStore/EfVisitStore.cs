@@ -199,7 +199,8 @@ public class EfVisitStore(AppDbContext db) : IVisitStore
             .Where(v =>
                 v.TenantId == tenantId
                 && v.StartAt < to
-                && v.EndAt > from)
+                && v.EndAt > from
+                && v.Status != VisitStatus.Voided)
             .OrderBy(v => v.StartAt)
             .ToListAsync(cancellationToken);
     }

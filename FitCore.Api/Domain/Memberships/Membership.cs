@@ -28,7 +28,7 @@ public class Membership
     /// <summary>Credits held by open scheduled visits.</summary>
     public int SessionsReserved { get; set; }
 
-    /// <summary>Credits resolved (check-in, forfeit cancel, etc.).</summary>
+    /// <summary>Credits resolved (completed, no-show, forfeit cancel, etc.).</summary>
     public int SessionsBurned { get; set; }
 
     public int SessionsAvailable => SessionTotal - SessionsReserved - SessionsBurned;
