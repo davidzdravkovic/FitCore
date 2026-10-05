@@ -22,13 +22,6 @@ public class SesEmailSender(
         var aws = awsOptions.Value;
         var from = emailOptions.Value.From;
 
-        if (string.IsNullOrWhiteSpace(from))
-            throw new InvalidOperationException("Email:From is not configured.");
-
-        if (string.IsNullOrWhiteSpace(aws.AccessKeyId) ||
-            string.IsNullOrWhiteSpace(aws.SecretAccessKey))
-            throw new InvalidOperationException("Aws access keys are not configured.");
-
         using var client = new AmazonSimpleEmailServiceClient(
             aws.AccessKeyId,
             aws.SecretAccessKey,

@@ -6,6 +6,7 @@ using FitCore.Api.Data.Stores.OrganizationOwner.VisitsStore;
 using FitCore.Api.Features.Organizations.Admin.Memberships;
 using FitCore.Api.Features.Organizations.Admin.Services;
 using FitCore.Api.Features.Organizations.Admin.Visits;
+using FitCore.Api.Features.Organizations.Staff.Schedule;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
@@ -58,6 +59,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         services.AddScoped<IServiceStore, EfServiceStore>();
         services.AddScoped<IOrderedRowLocks, EfOrderedRowLocks>();
         services.AddScoped<VisitService>();
+        services.AddScoped<StaffScheduleService>();
         services.AddScoped<MembershipService>();
         services.AddScoped<GymServiceService>();
 

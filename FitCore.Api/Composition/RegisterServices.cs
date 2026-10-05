@@ -19,7 +19,10 @@ using FitCore.Api.Features.Organizations.Admin.Services;
 using FitCore.Api.Features.Organizations.Admin.Staff;
 using FitCore.Api.Features.Organizations.Admin.Visits;
 using FitCore.Api.Features.Organizations.Members;
+using FitCore.Api.Features.Organizations.Members.Me;
 using FitCore.Api.Features.Organizations.Staff;
+using FitCore.Api.Features.Organizations.Staff.Me;
+using FitCore.Api.Features.Organizations.Staff.Schedule;
 using FitCore.Api.Features.Platform.Tenants;
 using FitCore.Api.Features.Platform.Auth;
 using FitCore.Api.Infrastructure.App;
@@ -42,10 +45,29 @@ public static class RegisterServices
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<AwsOptions>(configuration.GetSection(AwsOptions.SectionName));
-        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        services.AddOptions<AwsOptions>()
+            .Bind(configuration.GetSection(AwsOptions.SectionName))
+            .Validate(
+                o => !string.IsNullOrWhiteSpace(o.AccessKeyId) &&
+                     !string.IsNullOrWhiteSpace(o.SecretAccessKey),
+                "Aws access keys are not configured.")
+            .ValidateOnStart();
+
+        services.AddOptions<EmailOptions>()
+            .Bind(configuration.GetSection(EmailOptions.SectionName))
+            .Validate(
+                o => !string.IsNullOrWhiteSpace(o.From),
+                "Email:From is not configured.")
+            .ValidateOnStart();
+
         services.Configure<AppOptions>(configuration.GetSection(AppOptions.SectionName));
-        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .Validate(
+                o => !string.IsNullOrWhiteSpace(o.SigningKey) && o.SigningKey.Length >= 32,
+                "Jwt:SigningKey must be at least 32 characters.")
+            .ValidateOnStart();
 
         services.AddOpenApi();
         services.AddControllers(options =>
@@ -93,6 +115,9 @@ public static class RegisterServices
         services.AddScoped<PlanService>();
         services.AddScoped<MembershipService>();
         services.AddScoped<VisitService>();
+        services.AddScoped<StaffScheduleService>();
+        services.AddScoped<StaffMeService>();
+        services.AddScoped<MemberMeService>();
         services.AddScoped<TenantService>();
         services.AddSingleton<JwtTokenIssuer>();
         services.AddSingleton<IClientLinks, ClientLinks>();
@@ -124,8 +149,6 @@ public static class RegisterServices
                 return;
 
             var jwt = jwtOptions.Value;
-            if (string.IsNullOrWhiteSpace(jwt.SigningKey) || jwt.SigningKey.Length < 32)
-                throw new InvalidOperationException("Jwt:SigningKey must be at least 32 characters.");
 
             options.TokenValidationParameters = new TokenValidationParameters
             {

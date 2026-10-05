@@ -45,9 +45,6 @@ public class JwtTokenIssuer(IOptions<JwtOptions> options)
         Guid? tenantId = null)
     {
         var jwt = options.Value;
-        if (string.IsNullOrWhiteSpace(jwt.SigningKey) || jwt.SigningKey.Length < 32)
-            throw new InvalidOperationException("Jwt:SigningKey must be at least 32 characters.");
-
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

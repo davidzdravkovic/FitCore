@@ -136,7 +136,7 @@ public class MembershipService(IMembershipStore membershipStore, IOrderedRowLock
         return Result<MembershipResponse>.Success(ToResponse(membership));
     }
 
-    private static MembershipResponse ToResponse(Membership membership) =>
+    internal static MembershipResponse ToResponse(Membership membership) =>
         new(
             membership.Id,
             membership.MemberId,

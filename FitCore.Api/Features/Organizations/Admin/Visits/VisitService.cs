@@ -477,7 +477,7 @@ public class VisitService(IVisitStore visitStore, IOrderedRowLocks rowLocks)
     private static bool IsUniqueViolation(DbUpdateException ex) =>
         ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
-    private static VisitResponse ToResponse(Visit visit) =>
+    internal static VisitResponse ToResponse(Visit visit) =>
         new(
             visit.Id,
             visit.MembershipId,

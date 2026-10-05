@@ -185,13 +185,51 @@ public class EfVisitStore(AppDbContext db) : IVisitStore
             cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Visit>> ListByTenantAsync(
+    public Task<IReadOnlyList<Visit>> ListByTenantAsync(
         Guid tenantId,
         DateTime from,
         DateTime to,
+        CancellationToken cancellationToken = default) =>
+        ListWindowAsync(tenantId, from, to, coachStaffId: null, memberId: null, cancellationToken);
+
+    public Task<IReadOnlyList<Visit>> ListByCoachAsync(
+        Guid tenantId,
+        Guid coachStaffId,
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken = default) =>
+        ListWindowAsync(tenantId, from, to, coachStaffId, memberId: null, cancellationToken);
+
+    public Task<IReadOnlyList<Visit>> ListByMemberAsync(
+        Guid tenantId,
+        Guid memberId,
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken = default) =>
+        ListWindowAsync(tenantId, from, to, coachStaffId: null, memberId, cancellationToken);
+
+    public Task<bool> IsOwnedByCoachAsync(
+        Guid tenantId,
+        Guid visitId,
+        Guid coachStaffId,
         CancellationToken cancellationToken = default)
     {
-        return await db.Visits
+        return db.Visits.AnyAsync(
+            v => v.TenantId == tenantId
+                && v.Id == visitId
+                && v.CoachStaffId == coachStaffId,
+            cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<Visit>> ListWindowAsync(
+        Guid tenantId,
+        DateTime from,
+        DateTime to,
+        Guid? coachStaffId,
+        Guid? memberId,
+        CancellationToken cancellationToken)
+    {
+        var query = db.Visits
             .AsNoTracking()
             .Include(v => v.Member)
             .Include(v => v.CoachStaff)
@@ -200,7 +238,15 @@ public class EfVisitStore(AppDbContext db) : IVisitStore
                 v.TenantId == tenantId
                 && v.StartAt < to
                 && v.EndAt > from
-                && v.Status != VisitStatus.Voided)
+                && v.Status != VisitStatus.Voided);
+
+        if (coachStaffId is Guid coachId)
+            query = query.Where(v => v.CoachStaffId == coachId);
+
+        if (memberId is Guid mid)
+            query = query.Where(v => v.MemberId == mid);
+
+        return await query
             .OrderBy(v => v.StartAt)
             .ToListAsync(cancellationToken);
     }

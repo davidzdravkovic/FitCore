@@ -36,6 +36,7 @@ public static class ErrorCodes
     public const string MembershipNotSchedulable = "membership-not-schedulable";
 
     public const string VisitNotFound = "visit-not-found";
+    public const string VisitCoachMismatch = "visit-coach-mismatch";
     public const string VisitNotVoidable = "visit-not-voidable";
     public const string VisitNotResolvable = "visit-not-resolvable";
     public const string VisitResolveBeforeStart = "visit-resolve-before-start";

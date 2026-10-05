@@ -116,6 +116,6 @@ public class StaffService(
         return Result.Success();
     }
 
-    private static StaffResponse ToResponse(StaffEntity staff) =>
+    internal static StaffResponse ToResponse(StaffEntity staff) =>
         new(staff.Id, staff.FirstName, staff.LastName, staff.Email);
 }

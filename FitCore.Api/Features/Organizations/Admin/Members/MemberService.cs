@@ -190,7 +190,7 @@ public class MemberService(
         return Result.Success();
     }
 
-    private static MemberResponse ToResponse(Member member) =>
+    internal static MemberResponse ToResponse(Member member) =>
         new(
             member.Id,
             member.FirstName,

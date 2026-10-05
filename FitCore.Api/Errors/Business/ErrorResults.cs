@@ -76,6 +76,8 @@ public static class ErrorResults
         ErrorCodes.MembershipNotSchedulable =>
             "Only active memberships can be scheduled.",
         ErrorCodes.VisitNotFound => "Visit not found.",
+        ErrorCodes.VisitCoachMismatch =>
+            "Staff can only schedule visits on their own calendar.",
         ErrorCodes.VisitNotVoidable =>
             "Only scheduled visits can be voided as a scheduling mistake.",
         ErrorCodes.VisitNotResolvable =>

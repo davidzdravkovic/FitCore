@@ -21,6 +21,20 @@ public class EfMembershipStore(AppDbContext db) : IMembershipStore
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Membership>> ListByMemberAsync(
+        Guid tenantId,
+        Guid memberId,
+        CancellationToken cancellationToken = default)
+    {
+        return await db.Memberships
+            .AsNoTracking()
+            .Include(m => m.Member)
+            .Include(m => m.Plan)
+            .Where(m => m.TenantId == tenantId && m.MemberId == memberId)
+            .OrderByDescending(m => m.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<Member?> FindActiveMemberAsync(
         Guid tenantId,
         Guid memberId,

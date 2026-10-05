@@ -70,6 +70,26 @@ public interface IVisitStore
         DateTime to,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Visit>> ListByCoachAsync(
+        Guid tenantId,
+        Guid coachStaffId,
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Visit>> ListByMemberAsync(
+        Guid tenantId,
+        Guid memberId,
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> IsOwnedByCoachAsync(
+        Guid tenantId,
+        Guid visitId,
+        Guid coachStaffId,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(Visit visit);
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
