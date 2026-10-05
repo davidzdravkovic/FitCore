@@ -73,5 +73,6 @@ public class StaffAuthService(IStaffStore staffStore, JwtTokenIssuer jwtTokenIss
             message,
             jwtTokenIssuer.CreateTenantStaffToken(staff),
             staff.Tenant.Name,
-            staff.FirstName);
+            staff.FirstName,
+            staff.Tenant.TimeZone);
 }

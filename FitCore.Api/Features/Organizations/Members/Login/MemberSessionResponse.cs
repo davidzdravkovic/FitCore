@@ -4,4 +4,5 @@ public record MemberSessionResponse(
     string Message,
     string AccessToken,
     string OrganizationName,
-    string FirstName);
+    string FirstName,
+    string TimeZone);

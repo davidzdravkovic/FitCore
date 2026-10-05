@@ -72,5 +72,6 @@ public class MemberAuthService(IMemberStore memberStore, JwtTokenIssuer jwtToken
             message,
             jwtTokenIssuer.CreateMemberToken(member),
             member.Tenant.Name,
-            member.FirstName);
+            member.FirstName,
+            member.Tenant.TimeZone);
 }
