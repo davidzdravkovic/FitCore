@@ -2,7 +2,7 @@
 
 Multi-tenant gym CRM. One platform, many gyms. Each gym keeps its own members, staff, plans, memberships, and visits.
 
-**Live app → [https://fitcore.astibosoft.com](https://fitcore.astibosoft.com)**
+**Live app → [https://fitcore-landingpage.astibosoft.com](https://fitcore-landingpage.astibosoft.com)**
 
 ![FitCore day schedule with two coaches and booked visits](docs/images/fitcore-schedule.png)
 

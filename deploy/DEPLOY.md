@@ -30,24 +30,26 @@ Set `PLATFORM_ADMIN_EMAIL` / `PLATFORM_ADMIN_PASSWORD` in `.env` (seeded on star
 
 Edge config is in **Infra** (`nginx/conf.d/fitcore.conf` + `snippets/fitcore-locations.conf`):
 
-- Host: `fitcore.astibosoft.com`
-- SPA: `FITCORE_DIST` → `/usr/share/nginx/fitcore` (Flutter `build/web`)
-- API: `/api/` → `http://fitcore-api:8080` (keeps `/api` path)
+- Host: `fitcore.astibosoft.com` (A record to the VPS)
+- Client: `FITCORE_DIST` → `/` (Flutter `build/web`)
+- API: `/api/` → `http://fitcore-api:8080`
+- `fit-core-crm.duckdns.org` redirects every path to this host. Keep its certificate so that redirect can use HTTPS.
+
+The VPS does not serve the landing page.
 
 On the VPS, after pulling Infra and setting `FITCORE_DIST` in Infra `.env`:
 
 ```bash
-# Issue TLS once (stop nginx so certbot can bind :80)
+# Certificate for the app host. Keep the DuckDNS certificate.
 sudo docker compose -f ~/Infra/compose.yaml stop nginx
 sudo certbot certonly --standalone -d fitcore.astibosoft.com
 sudo docker compose -f ~/Infra/compose.yaml up -d
 
-# Flutter web (sibling clone)
 cd ~/FitCore.Client && flutter build web
 # FITCORE_DIST=/home/ubuntu/FitCore.Client/build/web
 ```
 
-`PUBLIC_ORIGIN=https://fitcore.astibosoft.com` must match the browser URL.
+`PUBLIC_ORIGIN=https://fitcore.astibosoft.com` is the app and API origin. Set it in `deploy/.env` and recreate the API container. Invite links use it. The release client calls this same host plus `/api/` because it uses the address it was opened on.
 
 ## Useful commands
 
