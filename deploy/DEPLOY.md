@@ -30,7 +30,7 @@ Set `PLATFORM_ADMIN_EMAIL` / `PLATFORM_ADMIN_PASSWORD` in `.env` (seeded on star
 
 Edge config is in **Infra** (`nginx/conf.d/fitcore.conf` + `snippets/fitcore-locations.conf`):
 
-- Host: `fit-core-crm.duckdns.org`
+- Host: `fitcore.astibosoft.com`
 - SPA: `FITCORE_DIST` → `/usr/share/nginx/fitcore` (Flutter `build/web`)
 - API: `/api/` → `http://fitcore-api:8080` (keeps `/api` path)
 
@@ -39,7 +39,7 @@ On the VPS, after pulling Infra and setting `FITCORE_DIST` in Infra `.env`:
 ```bash
 # Issue TLS once (stop nginx so certbot can bind :80)
 sudo docker compose -f ~/Infra/compose.yaml stop nginx
-sudo certbot certonly --standalone -d fit-core-crm.duckdns.org
+sudo certbot certonly --standalone -d fitcore.astibosoft.com
 sudo docker compose -f ~/Infra/compose.yaml up -d
 
 # Flutter web (sibling clone)
@@ -47,7 +47,7 @@ cd ~/FitCore.Client && flutter build web
 # FITCORE_DIST=/home/ubuntu/FitCore.Client/build/web
 ```
 
-`PUBLIC_ORIGIN=https://fit-core-crm.duckdns.org` must match the browser URL.
+`PUBLIC_ORIGIN=https://fitcore.astibosoft.com` must match the browser URL.
 
 ## Useful commands
 
