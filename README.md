@@ -2,7 +2,8 @@
 
 Multi-tenant gym CRM. One platform, many gyms. Each gym keeps its own members, staff, plans, memberships, and visits.
 
-**Live app → [https://fitcore-landing.astibosoft.com](https://fitcore-landing.astibosoft.com)**
+**Landing page → [https://fitcore-landing.astibosoft.com](https://fitcore-landing.astibosoft.com)**  
+Access to the app is invite-only.
 
 ![FitCore day schedule with two coaches and booked visits](docs/images/fitcore-schedule.png)
 
@@ -23,7 +24,7 @@ FitCore is being built for gyms I am approaching now. The app is deployed. It is
 
 **Gym owner**
 - Invite-only staff and members
-- Assignes memberships
+- Assigns memberships
 - Visits booked on an active membership
 
 **Staff**
@@ -77,7 +78,7 @@ Edge nginx and the shared Postgres live in [Infra](https://github.com/davidzdrav
 
 The core of this app is two concepts: the member lifecycle, and the calendar. This section describes the design of how their main constraints are protected.
 
-**Member lifecycle.** Members, memberships, and visits each have their own states, and together they are one domain context. Only certain combinations of those states are valid. Each lifecycle represents a situation where all entities are in certain state that together form valid business context.
+**Member lifecycle.** Members, memberships, and visits each have their own states, and together they are one domain context. Only certain combinations of those states are valid.
 For example:
 - `Paused member` needs to have expired or cancelled memberships that means there should be no active schedules for that member.
 - `Active member` needs to have at least one active membership, meaning there are unresolved or disposable visits for an active membership.
