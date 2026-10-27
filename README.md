@@ -131,11 +131,17 @@ Then run the API with `dotnet run --project FitCore.Api`.
 
 ## Design notes
 
-- [Identities](FitCore.Api/docs/architecture/phase-01-identities-data-model.md)
-- [States](FitCore.Api/docs/architecture/States.md)
-- [Domain evolution](FitCore.Api/docs/architecture/ADR-001-domain-model-evolution.md)
-- [Lock order](FitCore.Api/docs/architecture/row-lock-ordering.md)
+**Member lifecycle**
+- [States](FitCore.Api/docs/domain/states.md)
+
+**Calendar**
+- [Lock order](FitCore.Api/docs/concurrency/row-lock-ordering.md)
 - [Invariants](FitCore.Api/docs/concurrency/Invariants.md)
+
+**How the model grew**
+- [Evolution](FitCore.Api/docs/evolution/README.md) · [Phase 01](FitCore.Api/docs/evolution/phase-01-identities.md) · [Phase 02](FitCore.Api/docs/evolution/phase-02-operations.md)
+
+Full index: [FitCore.Api/docs](FitCore.Api/docs).
 
 ---
 

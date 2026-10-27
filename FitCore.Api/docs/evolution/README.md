@@ -10,6 +10,10 @@ The evolution is going to be done in `four` phases:
 Business rules discovered in each phase drive the evolution of the domain model.
 The evolution does not expect a perfect model from beginning since the business rules can not be known upfront as a whole.
 
+Implemented so far:
+- [Phase 01 — Identities](phase-01-identities.md)
+- [Phase 02 — Operations](phase-02-operations.md)
+
 ---
 
 ## Phase one - Identities
